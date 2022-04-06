@@ -46,6 +46,7 @@ class MariaDBConnector(object):
                 cur.execute(query)
             self.conn.commit()
             self.conn.autocommit = True
+            return cur.rowcount
         except mariadb.Error as e:
             self.conn.rollback()
             raise MariaDBException(e)

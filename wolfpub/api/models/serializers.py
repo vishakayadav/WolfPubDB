@@ -2,7 +2,7 @@
 API Request Model
 """
 
-from flask_restplus import fields
+from flask_restplus import fields, inputs
 from flask_restplus import reqparse
 
 from wolfpub.api.restplus import api
@@ -33,13 +33,20 @@ DISTRIBUTOR_ARGUMENTS = api.model("Distributor_Model", {
     "city": fields.String(min_length=1, max_length=10, required=True),
     "phone_number": fields.String(min_length=10, max_length=10, pattern='\\d{10}', required=True),
     "contact_person": fields.String(max_length=100),
+    "contact_email": fields.String(max_length=100, required=False,
+                                   pattern='^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$'),
+    "periodicity": fields.String(max_length=20, required=False),
+})
+
+ACCOUNT_ARGUMENTS = api.model("Account_Model", {
+    "distributor_id": fields.String(min_length=1, max_length=6, pattern='\\d+', required=True),
     "contact_email": fields.String(max_length=100, required=True,
                                    pattern='^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$'),
     "periodicity": fields.String(max_length=20, required=True),
 })
 
-ENTITY_ARGUMENT = reqparse.RequestParser()
-ENTITY_ARGUMENT.add_argument('entity', type=str, location='args', required=True)
+REGISTER_ARGUMENT = reqparse.RequestParser()
+REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)
 
 PAGE_SETUP_ARGUMENTS = reqparse.RequestParser()
 PAGE_SETUP_ARGUMENTS.add_argument('sort_by', type=str, location='args', required=False)

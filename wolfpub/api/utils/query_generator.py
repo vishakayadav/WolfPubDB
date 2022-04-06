@@ -31,6 +31,14 @@ class QueryGenerator(object):
         query = f"""select {', '.join(columns)} from {table_name} where {where_cond}"""
         return query
 
+    def update(self, table_name: str, condition: dict, update_data: dict):
+        self.is_nested(update_data)
+        self.is_nested(condition)
+        set_values = ', '.join([f"{key}='{value}'" for key, value in update_data.items()])
+        where_cond = ' and '.join([f"{key}='{value}'" for key, value in condition.items()])
+        query = f"""update {table_name} set {set_values} where {where_cond}"""
+        return query
+
     def delete(self, table_name: str, condition: dict):
         self.is_nested(condition)
         where_cond = ' and '.join([f"{key}='{value}'" for key, value in condition.items()])
