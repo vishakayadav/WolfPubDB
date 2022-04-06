@@ -22,6 +22,12 @@ class DistributorHandler(object):
         select_query = self.query_gen.select(table_name, ['distributor_id'], condition)
         return self.db.get_result(select_query)[0]
 
+    def get(self, distributor_id: str):
+        table_name = 'distributors'
+        cond = {'distributor_id': distributor_id}
+        select_query = self.query_gen.select(table_name, ['*'], cond)
+        return self.db.get_result(select_query)
+
     def register(self, account: dict):
         table_name = 'accounts'
         insert_query = self.query_gen.insert(table_name, account)

@@ -1,5 +1,5 @@
 """
-To handle the configuration of Data Gaps Job
+To handle the Distributor and its account
 """
 
 import json
@@ -53,7 +53,15 @@ class Distributor(Resource):
         """
         End-point to get the existing distributors details
         """
-        pass
+        try:
+            output = distributor_handler.get(distributor_id)
+            if len(output) > 0:
+                return CustomResponse(data=output[0])
+            return CustomResponse(data={}, message=f"Distributor with id '{distributor_id}' does not exist",
+                                  status_code=404)
+
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
     def delete(self, distributor_id):
         """
