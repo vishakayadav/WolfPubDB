@@ -6,59 +6,61 @@ import json
 
 from flask import request
 from flask_restplus import Resource
-from micro_kit import CustomResponse
 
 from wolfpub.api.handlers.distributor import DistributorHandler
-from wolfpub.api.models.serializers import JOB_CONFIGURATION_ARGUMENTS
+from wolfpub.api.models.serializers import DISTRIBUTOR_ARGUMENTS
 from wolfpub.api.restplus import api
+from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException
+from wolfpub.api.utils.custom_response import CustomResponse
 from wolfpub.api.utils.mariadb_connector import MariaDBConnector
 
 
-ns = api.namespace('distributors', description='Route admin for data-gaps configuration based actions.')
+ns = api.namespace('distributors', description='Route admin for distributor actions.')
 
-config_handler = DistributorHandler(MariaDBConnector())
+distributor_handler = DistributorHandler(MariaDBConnector())
 
 
 @ns.route("")
+class Distributors(Resource):
+    """
+    Focuses on setting distributor in WolfPubDB.
+    """
+    @ns.expect(DISTRIBUTOR_ARGUMENTS, validate=True)
+    def post(self):
+        """
+        End-point to set new distributor and register its account
+        """
+        try:
+            distributor = json.loads(request.data)
+            account = {'contact_email': distributor.pop('contact_email'),
+                       'periodicity': distributor.pop('periodicity')}
+            dist_id = distributor_handler.set(distributor)
+            account.update(dist_id)
+            output = distributor_handler.register(account)
+            output.update(dist_id)
+            return CustomResponse(data=output)
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/<string:distributor_id>")
 class Distributor(Resource):
     """
-    Focuses on fetching, setting and deleting the configuration for the Data Gaps Job to be scheduled.
+    Focuses on fetching, updating and deleting distributor from WolfPubDB.
     """
 
-    def get(self):
+    def get(self, distributor_id):
         """
-        End-point to get the existing configuration for the group by columns and scheduling.
+        End-point to get the existing distributors details
         """
         pass
 
-    @ns.expect(JOB_CONFIGURATION_ARGUMENTS, validate=True)
-    def post(self):
+    def delete(self, distributor_id):
         """
-        End-point to set new configuration for the group by columns and scheduling.
+        End-point to delete distributor
         """
-        configuration = json.loads(request.data)
-        output, status_code = None, None
-        return CustomResponse(output['data'] if 'data' in output else {}, status_code, output['message'])
-
-    def delete(self):
-        """
-        End-point to delete execution of scheduled Azkaban job
-        """
-        output, status_code = None, None
-        return CustomResponse(output['data'] if 'data' in output else {}, status_code, output['message'])
-
-
-@ns.route("/columns")
-class GroupBySuggestion(Resource):
-    """
-    Focuses on getting the list of columns eligible to be a part of entity
-    """
-
-    def get(self):
-        """
-        End-point to get the suggestion for the group by columns.
-        """
-        output, status_code = None, None
-        if isinstance(output, dict):
-            return CustomResponse(output['message'], status_code)
-        return CustomResponse(list(output), status_code)
+        try:
+            output = distributor_handler.remove(distributor_id)
+            return CustomResponse(data=output, message='Distributor is deleted')
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)

@@ -54,5 +54,5 @@ class FileLogger(object):
             raise e
 
 
-LOG_PATH = os.path.join(config.API_SETTINGS.get('LOG_DIR', os.path.dirname(os.path.abspath(__file__))), 'wolfpub.log')
+LOG_PATH = os.path.join(config.API_SETTINGS.get('LOG_DIR', config.BASE_DIR), 'wolfpub.log')
 WOLFPUB_LOGGER = FileLogger(api_name="wolfpub", absolute_log_file_path=LOG_PATH).logger()

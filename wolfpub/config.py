@@ -8,11 +8,6 @@ from ast import literal_eval
 from dotenv import load_dotenv
 
 load_dotenv()
-# dot_env_path = os.getenv("ENV_PATH", None)
-# if dot_env_path is not None:
-#     load_dotenv(dotenv_path=dot_env_path, verbose=True)
-# else:
-#     raise Exception("No environment file provided.")
 
 CONFIG_PARSER = ConfigParser(os.environ)
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings.conf')

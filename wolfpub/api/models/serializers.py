@@ -26,10 +26,16 @@ SUGGEST_FILTER_ARGUMENTS = api.model("Suggest_Filter_Model", {
     }), required=False)
 })
 
-JOB_CONFIGURATION_ARGUMENTS = api.model("Job_Configuration_Model", {
-    "user_id": fields.String(required=True),
-    "group_by_keys": fields.List(fields.String(), required=True),
-    "schedule": fields.Nested(api.model("andOperatorModel", {}))
+DISTRIBUTOR_ARGUMENTS = api.model("Distributor_Model", {
+    "name": fields.String(min_length=1, max_length=200, required=True),
+    "distributor_type": fields.String(min_length=1, max_length=20, required=True),
+    "address": fields.String(min_length=1, max_length=100, required=True),
+    "city": fields.String(min_length=1, max_length=10, required=True),
+    "phone_number": fields.String(min_length=10, max_length=10, pattern='\\d{10}', required=True),
+    "contact_person": fields.String(max_length=100),
+    "contact_email": fields.String(max_length=100, required=True,
+                                   pattern='^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$'),
+    "periodicity": fields.String(max_length=20, required=True),
 })
 
 ENTITY_ARGUMENT = reqparse.RequestParser()

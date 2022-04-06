@@ -6,4 +6,4 @@
 - set values for Maria DB connection
 - `pip install -r requirements.txt`
 - `python setup.py install`
-- `python wolfpub/run.py`
+- `python run.py`
