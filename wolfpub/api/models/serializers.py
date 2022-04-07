@@ -67,6 +67,27 @@ ORDER_ARGUMENTS = api.model("Order_Model", {
     }))
 })
 
+CONTENT_WRITER_ARGUMENTS = api.model("Content_Writer_Model", {
+    "ssn": fields.String(min_length=1, max_length=6, pattern='\\d{3}-\\d{2}-\\d{4}', required=True),
+    "name": fields.String(min_length=1, max_length=200, required=True),
+    "gender": fields.String(min_length=1, max_length=1, required=False),
+    "age": fields.Integer(required=False, default=1),
+    "phone_number": fields.String(min_length=10, max_length=10, pattern='\\d{10}', required=True),
+    "job_title": fields.String(min_length=1, max_length=50, required=True)
+})
+
+AUTHOR_ARGUMENTS = api.model("Author_Model", {
+    "emp_id": fields.String(min_length=1, max_length=6, required=True),
+    "type": fields.String(min_length=1, max_length=10, required=True, default="staff")
+})
+
+EDITOR_ARGUMENTS = api.model("Editor_Model", {
+    "emp_id": fields.String(min_length=1, max_length=6, required=True),
+    "type": fields.String(min_length=1, max_length=10, required=True, default="staff")
+})
+
+
+
 REGISTER_ARGUMENT = reqparse.RequestParser()
 REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)
 
