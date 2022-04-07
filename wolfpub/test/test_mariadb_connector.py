@@ -2,10 +2,8 @@
 Test Cases for Mongo Connector
 """
 import pytest
+from MySQLdb import DataError
 
-from wolfpub.api.utils.custom_exceptions import MariaDBException
-
-from wolfpub import config
 from wolfpub.api.utils.mariadb_connector import MariaDBConnector
 
 mariadb = MariaDBConnector()
@@ -21,8 +19,11 @@ class TestExecute(object):
         """
         Positive Test Case
         """
-        queries = ["create table test1 (id int, name varchar(10))", "insert into test1 values (1, 'ABC')"]
-        mariadb.execute(queries, conn=mysql)
+        queries = ["create table test1 (id int primary key auto_increment, name varchar(10))",
+                   "insert into test1 (name) values ('ABC')"]
+        row_affected, last_row_id = mariadb.execute(queries, conn=mysql)
+        assert row_affected == 1
+        assert last_row_id == 1
 
     @staticmethod
     def test_execute_negative(mysql):
@@ -30,7 +31,7 @@ class TestExecute(object):
         Negative Test Case: invalid query
         """
         queries = ["create table test1 (id int, name varchar(2))", "insert into test1 values (1, 'ABC')"]
-        with pytest.raises(MariaDBException):
+        with pytest.raises(DataError):
             mariadb.execute(queries, conn=mysql)
 
 

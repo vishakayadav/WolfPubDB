@@ -1,6 +1,7 @@
 """
 API Request Model
 """
+from datetime import datetime
 
 from flask_restplus import fields, inputs
 from flask_restplus import reqparse
@@ -35,14 +36,35 @@ DISTRIBUTOR_ARGUMENTS = api.model("Distributor_Model", {
     "contact_person": fields.String(max_length=100),
     "contact_email": fields.String(max_length=100, required=False,
                                    pattern='^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$'),
-    "periodicity": fields.String(max_length=20, required=False),
+    "periodicity": fields.String(max_length=20, required=False)
 })
 
 ACCOUNT_ARGUMENTS = api.model("Account_Model", {
     "distributor_id": fields.String(min_length=1, max_length=6, pattern='\\d+', required=True),
     "contact_email": fields.String(max_length=100, required=True,
                                    pattern='^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$'),
-    "periodicity": fields.String(max_length=20, required=True),
+    "periodicity": fields.String(max_length=20, required=True)
+})
+
+BOOK_ORDER_ARGUMENTS = api.model("Book_Order_Model", {
+    "book_id": fields.String(min_length=1, max_length=6, pattern='\\d+', required=True),
+    "edition": fields.Date(required=True),
+    "quantity": fields.Integer(required=False, default=1)
+})
+
+PERIODICAL_ORDER_ARGUMENTS = api.model("Periodical_Order_Model", {
+    "periodical_id": fields.String(min_length=1, max_length=6, pattern='\\d+', required=True),
+    "issue": fields.Date(required=True),
+    "quantity": fields.Integer(required=False, default=1)
+})
+
+ORDER_ARGUMENTS = api.model("Order_Model", {
+    "account_id": fields.String(min_length=1, max_length=6, pattern='\\d+', required=True),
+    "delivery_date": fields.Date(required=True),
+    "items": fields.Nested(api.model("Items_Model", {
+        "books": fields.List(fields.Nested(BOOK_ORDER_ARGUMENTS), required=True),
+        "periodicals": fields.List(fields.Nested(PERIODICAL_ORDER_ARGUMENTS), required=True)
+    }))
 })
 
 REGISTER_ARGUMENT = reqparse.RequestParser()
@@ -54,9 +76,3 @@ PAGE_SETUP_ARGUMENTS.add_argument('sort_order', type=str, location='args', requi
 PAGE_SETUP_ARGUMENTS.add_argument('offset', type=int, location='args', required=False)
 PAGE_SETUP_ARGUMENTS.add_argument('page_size', type=int, location='args', required=False)
 
-SEARCH_ARGUMENTS = reqparse.RequestParser()
-SEARCH_ARGUMENTS.add_argument('query', type=str, location='args', required=False)
-SEARCH_ARGUMENTS.add_argument('input', type=str, location='args', required=False)
-
-EXECUTION_ARGUMENT = reqparse.RequestParser()
-EXECUTION_ARGUMENT.add_argument('execId', type=str, location='args', required=False)

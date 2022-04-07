@@ -36,7 +36,7 @@ class CustomResponse(Response):
                     if 'message' in data:
                         response_object['message'] = data['message']
                 else:
-                    raise ValueError('Unsupported Data Structure: We only dictionary and list')
+                    raise ValueError('Unsupported Data Structure: We only support dictionary and list')
         except ValueError as e:
             response_object['status_code'] = 500
             response_object['message'] = e.__str__()

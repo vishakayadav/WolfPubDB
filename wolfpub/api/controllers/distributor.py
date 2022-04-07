@@ -7,8 +7,8 @@ import json
 from flask import request
 from flask_restplus import Resource
 
-from wolfpub.api.handlers.distributor import DistributorHandler
 from wolfpub.api.handlers.account import AccountHandler
+from wolfpub.api.handlers.distributor import DistributorHandler
 from wolfpub.api.models.serializers import DISTRIBUTOR_ARGUMENTS, REGISTER_ARGUMENT
 from wolfpub.api.restplus import api
 from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException
@@ -77,7 +77,7 @@ class Distributor(Resource):
         """
         try:
             distributor = json.loads(request.data)
-            contact_email = distributor.pop('contact_email', None),
+            contact_email = distributor.pop('contact_email', None)
             periodicity = distributor.pop('periodicity', None)
             account = {}
             if contact_email:
@@ -86,7 +86,7 @@ class Distributor(Resource):
                 account['periodicity'] = periodicity
             row_affected = distributor_handler.update(distributor_id, distributor)
             if row_affected < 1:
-                return CustomResponse(data={}, message=f"Distributor with id '{distributor_id}' Not Found",
+                return CustomResponse(data={}, message=f"No Updates made for Distributor with id '{distributor_id}'",
                                       status_code=404)
             if account:
                 row_affected = account_handler.update(distributor_id=distributor_id, update_data=account)

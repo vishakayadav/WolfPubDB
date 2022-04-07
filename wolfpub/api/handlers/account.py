@@ -16,11 +16,9 @@ class AccountHandler(object):
         self.query_gen = QueryGenerator()
 
     def register(self, account: dict):
-        insert_query = self.query_gen.insert(self.table_name, account)
-        self.db.execute([insert_query])
-        condition = {'contact_email': account['contact_email']}
-        select_query = self.query_gen.select(self.table_name, ['account_id'], condition)
-        return self.db.get_result(select_query)[0]
+        insert_query = self.query_gen.insert(self.table_name, [account])
+        _, last_row_id = self.db.execute([insert_query])
+        return {'account_id': last_row_id}
 
     def get(self, account_id: str):
         cond = {'account_id': account_id}
@@ -32,4 +30,5 @@ class AccountHandler(object):
             raise ValueError("Provide either 'account_id' or 'distributor_id' to update Account")
         cond = {'account_id': account_id} if account_id else {'distributor_id': distributor_id}
         update_query = self.query_gen.update(self.table_name, cond, update_data)
-        return self.db.execute([update_query])
+        row_affected, _ = self.db.execute([update_query])
+        return row_affected
