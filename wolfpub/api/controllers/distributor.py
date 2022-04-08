@@ -7,9 +7,9 @@ import json
 from flask import request
 from flask_restplus import Resource
 
-from wolfpub.api.handlers.account import AccountHandler
+from wolfpub.api.handlers.account import AccountHandler, AccountBillHandler
 from wolfpub.api.handlers.distributor import DistributorHandler
-from wolfpub.api.models.serializers import DISTRIBUTOR_ARGUMENTS, REGISTER_ARGUMENT
+from wolfpub.api.models.serializers import DISTRIBUTOR_ARGUMENTS, REGISTER_ARGUMENT, PAYMENT_ARGUMENTS
 from wolfpub.api.restplus import api
 from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException
 from wolfpub.api.utils.custom_response import CustomResponse
@@ -20,6 +20,7 @@ ns = api.namespace('distributors', description='Route admin for distributor acti
 mariadb = MariaDBConnector()
 distributor_handler = DistributorHandler(mariadb)
 account_handler = AccountHandler(mariadb)
+account_bill_handler = AccountBillHandler(mariadb)
 
 
 @ns.route("")
@@ -67,7 +68,7 @@ class Distributor(Resource):
                 return CustomResponse(data=output[0])
             return CustomResponse(data={}, message=f"Distributor with id '{distributor_id}' Not Found",
                                   status_code=404)
-        except (QueryGenerationException, MariaDBException) as e:
+        except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
     @ns.expect(DISTRIBUTOR_ARGUMENTS, validate=False, required=False)
@@ -95,7 +96,7 @@ class Distributor(Resource):
                                           message=f"Contact Email and Periodicity not updated - Account not registered with WolfPub",
                                           status_code=206)
             return CustomResponse(data={}, message="Distributor details Updated")
-        except (QueryGenerationException, MariaDBException) as e:
+        except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
     def delete(self, distributor_id):
@@ -109,5 +110,23 @@ class Distributor(Resource):
                                       status_code=404)
             else:
                 return CustomResponse(data={}, message="Distributor is deleted")
-        except (QueryGenerationException, MariaDBException) as e:
+        except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/<string:distributor_id>/accounts/<string:account_id>/bills")
+class AccountBills(Resource):
+    """
+    Focuses on managing the account's bill for distributors of WolfPubDB.
+    """
+
+    def post(self, account_id):
+        """
+        End-point to add bill to the distributor's account for the orders placed by the distributor
+        """
+        try:
+            bill_id = account_bill_handler.create_bill(account_id)
+            return CustomResponse(data=bill_id)
+        except (QueryGenerationException, MariaDBException, ValueError) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+

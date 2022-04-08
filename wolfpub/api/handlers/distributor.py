@@ -3,6 +3,7 @@ Module for Handling Distributors
 """
 
 from wolfpub.api.utils.query_generator import QueryGenerator
+from wolfpub.constants import DISTRIBUTORS
 
 
 class DistributorHandler(object):
@@ -12,13 +13,13 @@ class DistributorHandler(object):
 
     def __init__(self, db):
         self.db = db
-        self.table_name = 'distributors'
+        self.table_name = DISTRIBUTORS['table_name']
         self.query_gen = QueryGenerator()
 
     def set(self, distributor: dict):
         insert_query = self.query_gen.insert(self.table_name, [distributor])
         _, last_row_id = self.db.execute([insert_query])
-        return {'distributor_id': last_row_id}
+        return {'distributor_id': last_row_id[-1]}
 
     def get(self, distributor_id: str):
         cond = {'distributor_id': distributor_id}

@@ -58,3 +58,23 @@ class Orders(Resource):
             return CustomResponse(data=order_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/<string:order_id>")
+class Order(Resource):
+    """
+    Focuses on fetching, updating and deleting distributor from WolfPubDB.
+    """
+
+    def get(self, order_id):
+        """
+        End-point to get the existing distributors details
+        """
+        try:
+            output = order_handler.get(order_id)
+            if len(output) > 0:
+                return CustomResponse(data=output[0])
+            return CustomResponse(data={}, message=f"Order with id '{order_id}' Not Found",
+                                  status_code=404)
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)

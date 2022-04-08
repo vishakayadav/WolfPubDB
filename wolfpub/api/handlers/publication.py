@@ -3,6 +3,7 @@ Module for Handling the Account of Distributor with 'Wolf Pub' Publication House
 """
 
 from wolfpub.api.utils.query_generator import QueryGenerator
+from wolfpub.constants import PUBLICATIONS, BOOKS, PERIODICALS
 
 
 class PublicationHandler(object):
@@ -12,10 +13,10 @@ class PublicationHandler(object):
 
     def __init__(self, db):
         self.db = db
-        self.table_name = 'publications'
+        self.table_name = PUBLICATIONS['table_name']
         self.primary_key = 'publication_id'
         self.secondary_key = []
-        self.columns = ['publication_id', 'title', 'topic', 'publication_date', 'price']
+        self.columns = PUBLICATIONS['columns']
         self.query_gen = QueryGenerator()
 
     def reformat(self, obj):
@@ -50,9 +51,9 @@ class BookHandler(PublicationHandler):
 
     def __init__(self, db):
         super().__init__(db)
-        self.table_name = 'books'
+        self.table_name = BOOKS['table_name']
         self.secondary_key = ['book_id', 'edition']
-        self.columns = ['publication_id', 'isbn', 'creation_date', 'book_id', 'edition', 'is_available']
+        self.columns = BOOKS['columns']
 
 
 class PeriodicalHandler(PublicationHandler):
@@ -62,6 +63,6 @@ class PeriodicalHandler(PublicationHandler):
 
     def __init__(self, db):
         super().__init__(db)
-        self.table_name = 'periodicals'
+        self.table_name = PERIODICALS['table_name']
         self.secondary_key = ['periodical_id', 'issue']
-        self.columns = ['publication_id', 'issn', 'periodical_type', 'periodical_id', 'issue', 'is_available']
+        self.columns = PERIODICALS['columns']

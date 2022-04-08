@@ -41,11 +41,13 @@ class MariaDBConnector(object):
         else:
             cur = self.get_cursor()
         self.conn.autocommit = False
+        last_row_ids = []
         try:
             for query in queries:
-                self._execute(query, cur)
+                _, rowid = self._execute(query, cur)
+                last_row_ids.append(rowid)
             self.conn.commit()
-            return cur.rowcount, cur.lastrowid
+            return cur.rowcount, last_row_ids
         except MariaDBException as e:
             self.conn.rollback()
             raise MariaDBException(e)

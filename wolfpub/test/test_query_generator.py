@@ -21,8 +21,40 @@ class TestQueryGeneratorUtility(object):
                'address': {'street': '2801 Avent Ferry', 'city': 'Raleigh'},
                'number': '9195130732'}
         query_generator = QueryGenerator()
+        query_generator.is_list(row)
         with pytest.raises(QueryGenerationException):
-            query_generator.is_nested(row)
+            query_generator.is_dict(row)
+
+    def test_is_nested_list(self):
+        """
+        Negative Test Case: Nested Dict
+        """
+        row = {'name': 'ABC',
+               'type': 'Retailer',
+               'address': ['2801 Avent Ferry', 'Raleigh'],
+               'number': '9195130732'}
+        query_generator = QueryGenerator()
+        query_generator.is_dict(row)
+        with pytest.raises(QueryGenerationException):
+            query_generator.is_list(row)
+
+    def test_handling_where_operator(self):
+        """
+        Positive Test Case:
+        """
+        data = {'order_date': {'>': '2022-01-01', '<': '2022-03-03'}}
+        query_generator = QueryGenerator()
+        query_formed = query_generator.handling_where_operator('order_date', data['order_date'])
+        assert query_formed == "order_date > '2022-01-01' and order_date < '2022-03-03'"
+
+    def test_handling_set_operator(self):
+        """
+        Positive Test Case:
+        """
+        data = {'balance': {'+': '420', '-': '100'}}
+        query_generator = QueryGenerator()
+        query_formed = query_generator.handling_set_operator('balance', data['balance'])
+        assert query_formed == "balance = balance + '420', balance = balance - '100'"
 
     def test_get_where_cond(self):
         """
@@ -32,16 +64,14 @@ class TestQueryGeneratorUtility(object):
                 'type': ['Retailer', 'Whole Seller'],
                 'books': [{'book_id': 1, 'edition': 2},
                           {'book_id': 2, 'edition': 6}],
-                'periodicals': [{'periodical_id': 1, 'issue': 'Week7'},
-                                {'periodical_id': 2, 'issue': 'Month12'}],
+                'order_date': {'>': '2022-01-01'},
                 'address': None,
                 'number': 9195130732}
         query_generator = QueryGenerator()
         query_formed = query_generator.get_where_cond(cond)
         assert query_formed == "name='ABC' and type IN ('Retailer', 'Whole Seller') and " \
                                "((book_id='1' and edition='2') or (book_id='2' and edition='6')) and " \
-                               "((periodical_id='1' and issue='Week7') or (periodical_id='2' and issue='Month12')) and " \
-                               "address IS NULL and number='9195130732'"
+                               "order_date > '2022-01-01' and address IS NULL and number='9195130732'"
 
     def test_get_where_cond_invalid_value(self):
         """
@@ -119,13 +149,13 @@ class TestUpdateQuery(object):
         row = {'name': 'ABC',
                'type': 'Whole Seller',
                'address': '2802 Avent Ferry',
-               'city': 'Raleigh',
+               'city': {'+': 'Raleigh'},
                'number': '9195130732'}
         cond = {'id': '1'}
         query_generator = QueryGenerator()
         query_formed = query_generator.update('sample', cond, row)
         assert query_formed.strip() == "update sample set name='ABC', type='Whole Seller', " \
-                                       "address='2802 Avent Ferry', city='Raleigh', number='9195130732' where id='1'"
+                                       "address='2802 Avent Ferry', city = city + 'Raleigh', number='9195130732' where id='1'"
 
     def test_update_query_nested_update_values(self):
         """
@@ -155,11 +185,3 @@ class TestDeleteQuery(object):
         query_formed = query_generator.delete('sample', cond)
         assert query_formed.strip() == "delete from sample where id='1'"
 
-    def test_delete_query_nested_cond(self):
-        """
-        Negative Test Case: condtion is nested dict
-        """
-        cond = {'id': {'value': 1}}
-        query_generator = QueryGenerator()
-        with pytest.raises(QueryGenerationException):
-            query_generator.delete('sample', cond)

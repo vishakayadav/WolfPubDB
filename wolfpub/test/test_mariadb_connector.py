@@ -23,7 +23,7 @@ class TestExecute(object):
                    "insert into test1 (name) values ('ABC')"]
         row_affected, last_row_id = mariadb.execute(queries, conn=mysql)
         assert row_affected == 1
-        assert last_row_id == 1
+        assert last_row_id[-1] == 1
 
     @staticmethod
     def test_execute_negative(mysql):
