@@ -11,7 +11,7 @@ class QueryGenerator(object):
     Focuses on providing the functionality to create AuroraPg sub-queries for the arguments provided
     """
     def __init__(self):
-        self.where_operators = ['>', '<', 'like', 'ilike']
+        self.where_operators = ['>', '<', '>=', '<=', 'like', 'ilike']
         self.set_operators = ['+', '-', '/', '*']
 
     @staticmethod
