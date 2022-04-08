@@ -43,6 +43,6 @@ class CustomResponse(Response):
             response_object['error'] = 'CustomResponse'
         finally:
             print(response_object)
-            return super(CustomResponse, self).__init__(response=json.dumps(response_object),
+            return super(CustomResponse, self).__init__(response=json.dumps(response_object, default=str),
                                                         status=response_object['status_code'],
                                                         **kwargs)
