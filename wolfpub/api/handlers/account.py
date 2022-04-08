@@ -4,6 +4,7 @@ Module for Handling the Account of Distributor with 'Wolf Pub' Publication House
 from datetime import date
 
 from wolfpub.api.utils.query_generator import QueryGenerator
+from wolfpub.constants import ORDERS, ACCOUNTS, ACCOUNT_BILLS
 
 
 class AccountHandler(object):
@@ -13,7 +14,7 @@ class AccountHandler(object):
 
     def __init__(self, db):
         self.db = db
-        self.table_name = 'accounts'
+        self.table_name = ACCOUNTS['table_name']
         self.query_gen = QueryGenerator()
 
     def register(self, account: dict):
@@ -42,9 +43,7 @@ class AccountBillHandler(object):
 
     def __init__(self, db):
         self.db = db
-        self.table_name = 'account_bills'
-        self.orders_table = 'orders'
-        self.accounts_table = 'accounts'
+        self.table_name = ACCOUNT_BILLS['table_name']
         self.query_gen = QueryGenerator()
 
     def create_bill(self, account_id: str):
@@ -56,7 +55,7 @@ class AccountBillHandler(object):
         cond_with_order_date = {'account_id': account_id,
                                 'order_date': {'>': latest_bill_date},
                                 'delivery_date': {'<=': cur_date}}
-        select_query_bill_amt = self.query_gen.select(self.orders_table, ['sum(total_price + shipping_cost) as bill'],
+        select_query_bill_amt = self.query_gen.select(ORDERS['table_name'], ['sum(total_price + shipping_cost) as bill'],
                                                       cond_with_order_date)
         row = self.db.get_result(select_query_bill_amt)
         if not row:
@@ -65,7 +64,7 @@ class AccountBillHandler(object):
         data = {'account_id': account_id, 'amount': bill_amount, 'bill_date': cur_date}
         insert_query = self.query_gen.insert(self.table_name, [data])
         update_date = {'balance': {'+': bill_amount}}
-        update_query = self.query_gen.update(self.accounts_table, cond, update_date)
+        update_query = self.query_gen.update(ACCOUNTS['table_name'], cond, update_date)
         _, last_row_id = self.db.execute([insert_query, update_query])
         return {'bill_id': last_row_id[0]}
 

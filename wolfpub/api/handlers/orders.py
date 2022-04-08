@@ -4,6 +4,7 @@ Module for Handling the Account of Distributor with 'Wolf Pub' Publication House
 from wolfpub.api.utils.custom_exceptions import MariaDBException
 
 from wolfpub.api.utils.query_generator import QueryGenerator
+from wolfpub.constants import ORDERS
 
 
 class OrderHandler(object):
@@ -13,7 +14,7 @@ class OrderHandler(object):
 
     def __init__(self, db):
         self.db = db
-        self.table_name = 'orders'
+        self.table_name = ORDERS['table_name']
         self.id_column = 'order_id'
         self.query_gen = QueryGenerator()
 

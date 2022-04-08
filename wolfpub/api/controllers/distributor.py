@@ -9,7 +9,7 @@ from flask_restplus import Resource
 
 from wolfpub.api.handlers.account import AccountHandler, AccountBillHandler
 from wolfpub.api.handlers.distributor import DistributorHandler
-from wolfpub.api.models.serializers import DISTRIBUTOR_ARGUMENTS, REGISTER_ARGUMENT
+from wolfpub.api.models.serializers import DISTRIBUTOR_ARGUMENTS, REGISTER_ARGUMENT, PAYMENT_ARGUMENTS
 from wolfpub.api.restplus import api
 from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException
 from wolfpub.api.utils.custom_response import CustomResponse
@@ -120,7 +120,7 @@ class AccountBills(Resource):
     Focuses on managing the account's bill for distributors of WolfPubDB.
     """
 
-    def post(self, distributor_id, account_id):
+    def post(self, account_id):
         """
         End-point to add bill to the distributor's account for the orders placed by the distributor
         """
