@@ -1,6 +1,7 @@
 """
 Module for Handling the Account of Distributor with 'Wolf Pub' Publication House
 """
+from datetime import date
 
 from wolfpub.api.utils.query_generator import QueryGenerator
 
@@ -18,7 +19,7 @@ class AccountHandler(object):
     def register(self, account: dict):
         insert_query = self.query_gen.insert(self.table_name, [account])
         _, last_row_id = self.db.execute([insert_query])
-        return {'account_id': last_row_id}
+        return {'account_id': last_row_id[-1]}
 
     def get(self, account_id: str):
         cond = {'account_id': account_id}

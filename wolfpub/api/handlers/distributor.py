@@ -18,7 +18,7 @@ class DistributorHandler(object):
     def set(self, distributor: dict):
         insert_query = self.query_gen.insert(self.table_name, [distributor])
         _, last_row_id = self.db.execute([insert_query])
-        return {'distributor_id': last_row_id}
+        return {'distributor_id': last_row_id[-1]}
 
     def get(self, distributor_id: str):
         cond = {'distributor_id': distributor_id}
