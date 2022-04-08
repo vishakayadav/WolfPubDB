@@ -67,6 +67,11 @@ ORDER_ARGUMENTS = api.model("Order_Model", {
     }))
 })
 
+PAYMENT_ARGUMENTS = api.model("Payment_Model", {
+    "amount": fields.Float(required=True)
+})
+
+
 REGISTER_ARGUMENT = reqparse.RequestParser()
 REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)
 

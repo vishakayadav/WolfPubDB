@@ -120,13 +120,32 @@ class AccountBills(Resource):
     Focuses on managing the account's bill for distributors of WolfPubDB.
     """
 
-    def post(self, account_id):
+    def post(self, distributor_id, account_id):
         """
         End-point to add bill to the distributor's account for the orders placed by the distributor
         """
         try:
             bill_id = account_bill_handler.create_bill(account_id)
             return CustomResponse(data=bill_id)
+        except (QueryGenerationException, MariaDBException, ValueError) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/<string:distributor_id>/accounts/<string:account_id>/payments")
+class AccountBills(Resource):
+    """
+    Focuses on manage the payments from distributors of WolfPubDB.
+    """
+
+    @ns.expect(PAYMENT_ARGUMENTS, validate=True)
+    def post(self, distributor_id, account_id):
+        """
+        End-point to add payment details and change outstanding balance of distributor’s account on receiving payment
+        """
+        try:
+            payment = json.loads(request.data)
+            payment_id = account_bill_handler.pay_bills(account_id, payment['amount'])
+            return CustomResponse(data=payment_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
