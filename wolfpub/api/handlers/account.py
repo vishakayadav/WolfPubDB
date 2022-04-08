@@ -4,7 +4,7 @@ Module for Handling the Account of Distributor with 'Wolf Pub' Publication House
 from datetime import date
 
 from wolfpub.api.utils.query_generator import QueryGenerator
-from wolfpub.constants import ORDERS, ACCOUNTS, ACCOUNT_BILLS
+from wolfpub.constants import ORDERS, ACCOUNTS, ACCOUNT_BILLS, ACCOUNT_PAYMENTS
 
 
 class AccountHandler(object):
@@ -68,10 +68,13 @@ class AccountBillHandler(object):
         _, last_row_id = self.db.execute([insert_query, update_query])
         return {'bill_id': last_row_id[0]}
 
-    def get(self, account_id: str):
-        cond = {'account_id': account_id}
-        select_query = self.query_gen.select(self.table_name, ['*'], cond)
-        return self.db.get_result(select_query)
+    def pay_bills(self, account_id: str, amount):
+        data = {'account_id': account_id, 'amount': amount, 'payment_date': date.today().strftime('%Y-%m-%d')}
+        insert_query = self.query_gen.insert(ACCOUNT_PAYMENTS['table_name'], [data])
+        update_data = {'balance': {'-': amount}}
+        update_query = self.query_gen.update(ACCOUNTS['table_name'], {'account_id': account_id}, update_data)
+        _, last_row_id = self.db.execute([insert_query, update_query])
+        return {'payment_id': last_row_id[0]}
 
     def update(self, account_id: str = '', distributor_id: str = '', update_data: dict = {}):
         if not account_id and not distributor_id:

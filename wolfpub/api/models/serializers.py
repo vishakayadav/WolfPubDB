@@ -67,6 +67,10 @@ ORDER_ARGUMENTS = api.model("Order_Model", {
     }))
 })
 
+PAYMENT_ARGUMENTS = api.model("Payment_Model", {
+    "amount": fields.Float(required=True)
+})
+
 CONTENT_WRITER_ARGUMENTS = api.model("Content_Writer_Model", {
     "ssn": fields.String(min_length=1, max_length=6, pattern='\\d{3}-\\d{2}-\\d{4}', required=True),
     "name": fields.String(min_length=1, max_length=200, required=True),
@@ -85,8 +89,6 @@ EDITOR_ARGUMENTS = api.model("Editor_Model", {
     "emp_id": fields.String(min_length=1, max_length=6, required=True),
     "type": fields.String(min_length=1, max_length=10, required=True, default="staff")
 })
-
-
 
 REGISTER_ARGUMENT = reqparse.RequestParser()
 REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)
