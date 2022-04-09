@@ -43,6 +43,23 @@ class PublicationHandler(object):
         select_query = self.query_gen.select(self.table_name, self.secondary_key, condition)
         return self.db.get_result(select_query)
 
+    def set(self, publication: dict):
+        insert_query = self.query_gen.insert(self.table_name, [publication])
+        _, last_row_id = self.db.execute([insert_query])
+        return {'publication_id': last_row_id}
+
+    def update(self, publication_id: str, update_data: dict):
+        cond = {'publication_id': publication_id}
+        update_query = self.query_gen.update(self.table_name, cond, update_data)
+        row_affected, _ = self.db.execute([update_query])
+        return row_affected
+
+    def remove(self, publication_id: str):
+        cond = {'publication_id': publication_id}
+        delete_query = self.query_gen.delete(self.table_name, cond)
+        row_affected, _ = self.db.execute([delete_query])
+        return row_affected
+
 
 class BookHandler(PublicationHandler):
     """
@@ -55,6 +72,39 @@ class BookHandler(PublicationHandler):
         self.secondary_key = ['book_id', 'edition']
         self.columns = BOOKS['columns']
 
+    def get(self, publication_id: str):
+        cond = {'emp_id': publication_id}
+        select_query = self.query_gen.select(self.table_name, ['*'], cond)
+        return self.db.get_result(select_query)
+
+    def set(self, publication: dict):
+        insert_query = self.query_gen.insert(self.table_name, [publication])
+        _, last_row_id = self.db.execute([insert_query])
+        return {'publication_id': last_row_id}
+
+    def update(self, publication_id: str, update_data: dict):
+        cond = {'publication_id': publication_id}
+        update_query = self.query_gen.update(self.table_name, cond, update_data)
+        row_affected, _ = self.db.execute([update_query])
+        return row_affected
+
+    def remove(self, publication_id: str):
+        cond = {'publication_id': publication_id}
+        delete_query = self.query_gen.delete(self.table_name, cond)
+        row_affected, _ = self.db.execute([delete_query])
+        return row_affected
+
+    def get_chapter(self, publication_id, chapter_id):
+        cond = {'publication_id': publication_id, 'chapter_id': chapter_id}
+        select_query = self.query_gen.select(self.table_name, ['*'], cond)
+        return self.db.get_result(select_query)
+
+    def remove_chapter(self, publication_id, chapter_id):
+        cond = {'publication_id': publication_id, 'chapter_id': chapter_id}
+        delete_query = self.query_gen.delete(self.table_name, cond)
+        row_affected, _ = self.db.execute([delete_query])
+        return row_affected
+
 
 class PeriodicalHandler(PublicationHandler):
     """
@@ -66,3 +116,36 @@ class PeriodicalHandler(PublicationHandler):
         self.table_name = PERIODICALS['table_name']
         self.secondary_key = ['periodical_id', 'issue']
         self.columns = PERIODICALS['columns']
+
+    def get(self, publication_id: str):
+        cond = {'emp_id': publication_id}
+        select_query = self.query_gen.select(self.table_name, ['*'], cond)
+        return self.db.get_result(select_query)
+
+    def set(self, publication: dict):
+        insert_query = self.query_gen.insert(self.table_name, [publication])
+        _, last_row_id = self.db.execute([insert_query])
+        return {'publication_id': last_row_id}
+
+    def update(self, publication_id: str, update_data: dict):
+        cond = {'publication_id': publication_id}
+        update_query = self.query_gen.update(self.table_name, cond, update_data)
+        row_affected, _ = self.db.execute([update_query])
+        return row_affected
+
+    def remove(self, publication_id: str):
+        cond = {'publication_id': publication_id}
+        delete_query = self.query_gen.delete(self.table_name, cond)
+        row_affected, _ = self.db.execute([delete_query])
+        return row_affected
+
+    def get_article(self, publication_id, article_id):
+        cond = {'publication_id': publication_id, 'chapter_id': article_id}
+        select_query = self.query_gen.select(self.table_name, ['*'], cond)
+        return self.db.get_result(select_query)
+
+    def remove_article(self, publication_id, article_id):
+        cond = {'publication_id': publication_id, 'chapter_id': article_id}
+        delete_query = self.query_gen.delete(self.table_name, cond)
+        row_affected, _ = self.db.execute([delete_query])
+        return row_affected

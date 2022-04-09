@@ -90,6 +90,49 @@ EDITOR_ARGUMENTS = api.model("Editor_Model", {
     "type": fields.String(min_length=1, max_length=10, required=True, default="staff")
 })
 
+PUBLICATION_ARGUMENTS = api.model("Publication_Model", {
+    "publication_id": fields.String(min_length=1, max_length=6, required=True),
+    "title": fields.String(min_length=1, max_length=200, required=True),
+    "topic": fields.String(min_length=1, max_length=200, required=True),
+    "publication_date": fields.Date(required=True),
+    "price": fields.Float(required=True)
+})
+
+BOOK_ARGUMENTS = api.model("Book_Model", {
+    "publication_id": fields.String(min_length=1, max_length=6, required=True),
+    "isbn": fields.String(min_length=1, max_length=13, pattern='\\d{*}-\\d{*}-\\d{*}-\\d{*}', required=True),
+    "creation_date": fields.Date(required=True),
+    "edition": fields.Integer(required=True, default=1),
+    "book_id": fields.String(min_length=1, max_length=6, required=True),
+    "is_available": fields.Boolean(default=True)
+})
+
+PERIODICAL_ARGUMENTS = api.model("Periodical_Model", {
+    "publication_id": fields.String(min_length=1, max_length=6, required=True),
+    "issn": fields.String(min_length=1, max_length=8, pattern='\\d{4}-\\d{4}', required=True),
+    "issue": fields.Integer(required=True, default=1),
+    "periodical_type": fields.String(min_length=1, max_length=10, required=True),
+    "periodical_id": fields.String(min_length=1, max_length=6, required=True),
+    "is_available": fields.Boolean(default=True)
+})
+
+CHAPTER_ARGUMENTS = api.model("Chapter_Model", {
+    "publication_id": fields.String(min_length=1, max_length=6, required=True),
+    "chapter_id": fields.String(min_length=1, max_length=6, required=True),
+    "chapter_title": fields.String(min_length=1, max_length=200, required=True),
+    "chapter_text": fields.String(min_length=1, max_length=2000, required=True)
+})
+
+ARTICLE_ARGUMENTS = api.model("Article_Model", {
+    "publication_id": fields.String(min_length=1, max_length=6, required=True),
+    "article_id": fields.String(min_length=1, max_length=6, required=True),
+    "creation_date": fields.Date(required=True),
+    "topic": fields.String(min_length=1, max_length=200, required=True),
+    "title": fields.String(min_length=1, max_length=200, required=True),
+    "text": fields.String(min_length=1, max_length=2000, required=True),
+    "journalist_name": fields.String(min_length=1, max_length=200, required=True)
+})
+
 REGISTER_ARGUMENT = reqparse.RequestParser()
 REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)
 
