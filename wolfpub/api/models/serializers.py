@@ -135,9 +135,15 @@ ARTICLE_ARGUMENTS = api.model("Article_Model", {
 REGISTER_ARGUMENT = reqparse.RequestParser()
 REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)
 
-PAGE_SETUP_ARGUMENTS = reqparse.RequestParser()
-PAGE_SETUP_ARGUMENTS.add_argument('sort_by', type=str, location='args', required=False)
-PAGE_SETUP_ARGUMENTS.add_argument('sort_order', type=str, location='args', required=False)
-PAGE_SETUP_ARGUMENTS.add_argument('offset', type=int, location='args', required=False)
-PAGE_SETUP_ARGUMENTS.add_argument('page_size', type=int, location='args', required=False)
+TIME_PERIOD_REPORT_ARGUMENTS = reqparse.RequestParser()
+TIME_PERIOD_REPORT_ARGUMENTS.add_argument('start_date', type=str, location='args', required=False)
+TIME_PERIOD_REPORT_ARGUMENTS.add_argument('end_date', type=str, location='args', required=False)
 
+REVENUE_REPORT_ARGUMENTS = reqparse.RequestParser()
+REVENUE_REPORT_ARGUMENTS.add_argument('stats', type=str, location='args',
+                                      help='distributor_wise, city_wise, location_wise',
+                                      required=False)
+
+SALARY_REPORT_ARGUMENTS = reqparse.RequestParser()
+SALARY_REPORT_ARGUMENTS.add_argument('stats', type=str, location='args', help='per_month, per_work_type',
+                                     required=False)

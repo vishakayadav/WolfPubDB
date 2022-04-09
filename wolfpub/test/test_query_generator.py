@@ -170,7 +170,7 @@ class TestUpdateQuery(object):
                'type': 'Whole Seller',
                'address': '2802 Avent Ferry',
                'city': {'+': 'Raleigh'},
-               'number': '9195130732'}
+               'number': 9195130732}
         cond = {'id': '1'}
         query_generator = QueryGenerator()
         query_formed = query_generator.update('sample', cond, row)
