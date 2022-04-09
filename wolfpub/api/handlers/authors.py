@@ -3,6 +3,7 @@ Module for Handling Authors
 """
 
 from wolfpub.api.utils.query_generator import QueryGenerator
+from wolfpub.constants import AUTHORS
 
 
 class AuthorsHandler(object):
@@ -12,14 +13,14 @@ class AuthorsHandler(object):
 
     def __init__(self, db):
         self.db = db
-        self.table_name = 'authors'
+        self.table_name = AUTHORS['table_name']
         self.query_gen = QueryGenerator()
 
     # TODO: Edit
     def set(self, employee: dict):
         insert_query = self.query_gen.insert(self.table_name, [employee])
         _, last_row_id = self.db.execute([insert_query])
-        return {'distributor_id': last_row_id}
+        return {'emp_id': last_row_id}
 
     def get(self, emp_id: str):
         cond = {'emp_id': emp_id}
