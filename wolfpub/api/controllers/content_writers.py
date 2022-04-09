@@ -41,7 +41,7 @@ class ContentWriters(Resource):
             cw_type = request.args.get('employee', None)
             content_writer['cw_type'] = cw_type
             employee = {
-                'type': content_writer.pop('emp_type', 'Staff')
+                'type': content_writer.get('emp_type', 'Staff')
             }
             if cw_type not in ['author', 'editor']:
                 raise ValueError('Employee must either be an author or an editor')
