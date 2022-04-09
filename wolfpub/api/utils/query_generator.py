@@ -72,9 +72,13 @@ class QueryGenerator(object):
                 f"{', '.join([f'{tuple(row.values())}' for row in rows])}"
         return query
 
-    def select(self, table_name: str, columns: list, condition: dict):
-        where_cond = self.get_where_cond(condition)
-        query = f"""select {', '.join(columns)} from {table_name} where {where_cond}"""
+    def select(self, table_name: str, columns: list, condition: dict, group_by: list = None):
+        query = f"""select {', '.join(columns)} from {table_name}"""
+        if condition:
+            where_cond = self.get_where_cond(condition)
+            query += f" where {where_cond}"
+        if group_by:
+            query += f" group by {', '.join(group_by)}"
         return query
 
     def update(self, table_name: str, condition: dict, update_data: dict):

@@ -118,6 +118,15 @@ class TestSelectQuery(object):
     Test Cases for Select Query
     """
 
+    def test_select_query_no_cond(self):
+        """
+        Positive Test Case: with no where clause
+        """
+        cond = {}
+        query_generator = QueryGenerator()
+        query_formed = query_generator.select('sample', ['id', 'name'], cond)
+        assert query_formed.strip() == "select id, name from sample"
+
     def test_select_query(self):
         """
         Positive Test Case
@@ -126,6 +135,17 @@ class TestSelectQuery(object):
         query_generator = QueryGenerator()
         query_formed = query_generator.select('sample', ['id', 'name'], cond)
         assert query_formed.strip() == "select id, name from sample where number='9195130732'"
+
+    def test_select_query_with_group_by(self):
+        """
+        Positive Test Case: With Group by keys
+        """
+        cond = {'number': '9195130'}
+        group_by = ['id']
+        query_generator = QueryGenerator()
+        query_formed = query_generator.select('sample', ['id', 'name'], cond, group_by)
+        assert query_formed.strip() == "select id, name from sample where number='9195130' group by id"
+
 
     def test_select_query_nested_cond(self):
         """
