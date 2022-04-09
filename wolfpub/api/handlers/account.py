@@ -25,7 +25,10 @@ class AccountHandler(object):
     def get(self, account_id: str):
         cond = {'account_id': account_id}
         select_query = self.query_gen.select(self.table_name, ['*'], cond)
-        return self.db.get_result(select_query)
+        dist = self.db.get_result(select_query)
+        if not dist:
+            raise IndexError(f"Distributor with id '{account_id}' Not Found")
+        return dist[0]
 
     def update(self, account_id: str = '', distributor_id: str = '', update_data: dict = {}):
         if not account_id and not distributor_id:
@@ -34,6 +37,12 @@ class AccountHandler(object):
         update_query = self.query_gen.update(self.table_name, cond, update_data)
         row_affected, _ = self.db.execute([update_query])
         return row_affected
+
+    def check_balance(self, account_id: str):
+        cond = {'account_id': account_id}
+        select_query = self.query_gen.select(self.table_name, ['balance'], cond)
+        balance = self.db.get_result(select_query)
+        return float(balance[0]['balance']) if balance else 0.00
 
 
 class AccountBillHandler(object):

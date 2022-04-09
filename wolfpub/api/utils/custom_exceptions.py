@@ -13,3 +13,9 @@ class QueryGenerationException(Exception):
     """
     Custom exception for Query Generator
     """
+
+
+class UnauthorizedOperation(Exception):
+    """
+    Custom exception for Query Generator
+    """

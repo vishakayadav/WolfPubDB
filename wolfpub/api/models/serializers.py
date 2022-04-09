@@ -59,7 +59,6 @@ PERIODICAL_ORDER_ARGUMENTS = api.model("Periodical_Order_Model", {
 })
 
 ORDER_ARGUMENTS = api.model("Order_Model", {
-    "account_id": fields.String(min_length=1, max_length=6, pattern='\\d+', required=True),
     "delivery_date": fields.Date(required=True),
     "items": fields.Nested(api.model("Items_Model", {
         "books": fields.List(fields.Nested(BOOK_ORDER_ARGUMENTS), required=True),

@@ -32,7 +32,7 @@ class OrderHandler(object):
         return [{'order_id': order_id,
                  'publication_id': order['publication_id'],
                  'quantity': order.get('quantity', 1),
-                 'price': float(order['price']) * int(order.get('quantity', '1'))} for order in obj]
+                 'price': float(order['price']) * int(order.get('quantity', 1))} for order in obj]
 
     def get(self, order_ids, select_cols: list = None):
         if select_cols is None:
@@ -46,10 +46,12 @@ class OrderHandler(object):
         self.db.conn.autocommit = False
         try:
             _, last_row_id = self.db._execute(insert_query, cursor)
-            book_orders = self.reformat_publication_order(book_orders, last_row_id[0])
-            periodical_orders = self.reformat_publication_order(periodical_orders, last_row_id[0])
-            self.db._execute(self.query_gen.insert('book_orders_info', book_orders), cursor)
-            self.db._execute(self.query_gen.insert('periodical_orders_info', periodical_orders), cursor)
+            if book_orders:
+                book_orders = self.reformat_publication_order(book_orders, last_row_id)
+                self.db._execute(self.query_gen.insert('book_orders_info', book_orders), cursor)
+            if periodical_orders:
+                periodical_orders = self.reformat_publication_order(periodical_orders, last_row_id)
+                self.db._execute(self.query_gen.insert('periodical_orders_info', periodical_orders), cursor)
             self.db.conn.commit()
         except MariaDBException as e:
             self.db.conn.rollback()

@@ -29,11 +29,11 @@ class PublicationHandler(object):
                 if isinstance(value, list):
                     self.reformat(value)
 
-    def get_by_id(self, publication_ids: list, select_cols: list = None):
+    def get_by_id(self, publication_ids, select_cols: list = None):
         if select_cols is None:
             select_cols = ['*']
-        if isinstance(publication_ids, str) or isinstance(publication_ids, int):
-            publication_ids = [publication_ids]
+        if isinstance(publication_ids, list) and len(publication_ids) == 1:
+            publication_ids = publication_ids[0]
         select_query = self.query_gen.select(self.table_name, select_cols, {'publication_id': publication_ids})
         return self.db.get_result(select_query)
 
