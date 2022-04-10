@@ -1,27 +1,123 @@
 """
-To handle the payments related to employees
+To handle the Content writers, their payments and their work
 """
+
 import json
-from datetime import date, datetime
 
 from flask import request
 from flask_restplus import Resource
+from datetime import date, datetime
 
+from wolfpub.api.handlers.employees import EmployeesHandler
+from wolfpub.api.handlers.authors import AuthorsHandler
+from wolfpub.api.handlers.editors import EditorsHandler
 from wolfpub.api.handlers.salary import PaymentHandler
 
-from wolfpub.api.models.serializers import SALARY_PAYMENT_ARGUMENTS
+from wolfpub.api.models.serializers import EMPLOYEE_ARGUMENTS, SALARY_PAYMENT_ARGUMENTS
 from wolfpub.api.restplus import api
 from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException, UnauthorizedOperation
 from wolfpub.api.utils.custom_response import CustomResponse
 from wolfpub.api.utils.mariadb_connector import MariaDBConnector
 
-ns = api.namespace('salaries', description='Route admin for payment actions.')
+ns = api.namespace('employees', description='Route admin for employee actions.')
 
 mariadb = MariaDBConnector()
+employees_handler = EmployeesHandler(mariadb)
+authors_handler = AuthorsHandler(mariadb)
+editors_handler = EditorsHandler(mariadb)
 payment_handler = PaymentHandler(mariadb)
 
 
 @ns.route("")
+class Employees(Resource):
+    """
+    Focuses on employee operations in WolfPubDB.
+    """
+
+    @ns.expect(EMPLOYEE_ARGUMENTS, validate=True)
+    def post(self):
+        """
+        End-point to creating new employees
+        """
+        try:
+            employee = json.loads(request.data)
+            cw_type = request.args.get('employee', None)
+            employee['cw_type'] = cw_type
+            cw = {
+                'type': employee.get('emp_type', 'Staff')
+            }
+            if cw_type not in ['author', 'editor']:
+                raise ValueError('Employee must either be an author or an editor')
+            emp_id = employees_handler.set(employee)
+            cw.update(emp_id)
+            if cw_type == "author":
+                authors_handler.set(cw)
+            else:
+                editors_handler.set(cw)
+            return CustomResponse(data=emp_id)
+        except (QueryGenerationException, MariaDBException, ValueError) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/<string:emp_id>")
+class Employees(Resource):
+    """
+    Focuses on fetching, updating and deleting employee details from WolfPubDB.
+    """
+
+    def get(self, emp_id):
+        """
+        End-point to get the existing employee details
+        """
+        try:
+            output = employees_handler.get(emp_id)
+            if len(output) > 0:
+                return CustomResponse(data=output[0])
+            return CustomResponse(data={}, message=f"Employee with id '{emp_id}' not found",
+                                  status_code=404)
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+    @ns.expect(EMPLOYEE_ARGUMENTS, validate=False, required=False)
+    def put(self, emp_id):
+        """
+        End-point to update the employee
+        """
+        try:
+            employee = json.loads(request.data)
+            emp_type = employee.pop('emp_type', None)
+            row_affected = employees_handler.update(emp_id, employee)
+            if row_affected < 1:
+                return CustomResponse(data={}, message=f"No updates made for employee with id '{emp_id}'",
+                                      status_code=404)
+            employee = {}
+            if emp_type:
+                employee['type'] = emp_type
+                row_affected = authors_handler.update(emp_id, employee)
+                if row_affected < 1:
+                    return CustomResponse(data={},
+                                          message=f"Employee type could not be updated for employee with id '{emp_id}'",
+                                          status_code=206)
+            return CustomResponse(data={}, message="Employee details updated")
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+    def delete(self, emp_id):
+        """
+        End-point to delete employee
+        """
+        try:
+            row_affected = employees_handler.remove(emp_id)
+            if row_affected < 1:
+                return CustomResponse(data={}, message=f"Employee with id '{emp_id}' not found",
+                                      status_code=404)
+            else:
+                return CustomResponse(data={}, message="Employee is deleted")
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/salaries")
 class Payment(Resource):
     """
     Focuses on providing functionality for payments to employees
@@ -45,7 +141,7 @@ class Payment(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
-@ns.route("/<string:transaction_id>")
+@ns.route("/salaries/<string:transaction_id>")
 class Payment(Resource):
     """
     Focuses on providing functionality for payments to employees

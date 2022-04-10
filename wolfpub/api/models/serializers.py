@@ -73,7 +73,7 @@ PAYMENT_ARGUMENTS = api.model("Payment_Model", {
     "amount": fields.Float(required=True)
 })
 
-CONTENT_WRITER_ARGUMENTS = api.model("Content_Writer_Model", {
+EMPLOYEE_ARGUMENTS = api.model("Employee_Model", {
     "ssn": fields.String(min_length=1, max_length=12, pattern='\\d{3}-\\d{2}-\\d{4}', required=True),
     "name": fields.String(min_length=1, max_length=200, required=True),
     "gender": fields.String(min_length=1, max_length=1, required=False),

@@ -5,24 +5,24 @@ Module for Handling Content Writers
 import random
 from wolfpub.api.utils.query_generator import QueryGenerator
 from wolfpub.api.utils.custom_response import CustomResponse
-from wolfpub.constants import CONTENT_WRITERS
+from wolfpub.constants import EMPLOYEES
 
 
-class ContentWritersHandler(object):
+class EmployeesHandler(object):
     """
     Focuses on providing functionality for Content Writers
     """
 
     def __init__(self, db):
         self.db = db
-        self.table_name = CONTENT_WRITERS['table_name']
+        self.table_name = EMPLOYEES['table_name']
         self.query_gen = QueryGenerator()
 
     @staticmethod
-    def get_employee_id(content_writer: dict):
+    def get_employee_id(employee: dict):
         try:
-            cw_type = content_writer.pop('cw_type', 'author')
-            emp_type = content_writer.pop('emp_type', 'Staff')
+            cw_type = employee.pop('cw_type', 'author')
+            emp_type = employee.pop('emp_type', 'Staff')
             emp_no = str(random.randint(1000, 9999))
             if cw_type == 'author' and emp_type == 'Staff':
                 emp_id = "AS" + emp_no
@@ -38,10 +38,10 @@ class ContentWritersHandler(object):
         except ValueError as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
-    def set(self, content_writer: dict):
-        emp_id = self.get_employee_id(content_writer)
-        content_writer['emp_id'] = emp_id
-        insert_query = self.query_gen.insert(self.table_name, [content_writer])
+    def set(self, employee: dict):
+        emp_id = self.get_employee_id(employee)
+        employee['emp_id'] = emp_id
+        insert_query = self.query_gen.insert(self.table_name, [employee])
         _, last_row_id = self.db.execute([insert_query])
         return {'emp_id': emp_id}
 

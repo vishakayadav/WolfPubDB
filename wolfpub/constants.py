@@ -25,7 +25,7 @@ ACCOUNTS = {
     }
 }
 
-CONTENT_WRITERS = {
+EMPLOYEES = {
     'table_name': 'content_writers',
     'columns': {
         'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
