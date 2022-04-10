@@ -1,115 +1,231 @@
 DISTRIBUTORS = {
     'table_name': 'distributors',
-    'columns': [
-        'distributor_id',
-        'name',
-        'distributor_type',
-        'address',
-        'city',
-        'phone_number',
-        'contact_person'
-    ]
+    'columns': {
+        'distributor_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
+        'name': {'type': 'varchar(200)', 'constraint': 'not null'},
+        'distributor_type': {'type': 'varchar(20)', 'constraint': ''},
+        'address': {'type': 'varchar(100)', 'constraint': 'not null'},
+        'city': {'type': 'varchar(20)', 'constraint': 'not null'},
+        'phone_number': {'type': 'int(10)', 'constraint': ''},
+        'contact_person': {'type': 'varchar(100)', 'constraint': ''},
+        'is_active': {'type': 'bool', 'constraint': 'default 1'}
+    }
 }
 
 ACCOUNTS = {
     'table_name': 'accounts',
-    'columns': [
-        'account_id',
-        'distributor_id',
-        'house_id',
-        'balance',
-        'contact_email',
-        'periodicity',
-        'is_active'
-    ]
+    'columns': {
+        'account_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
+        'distributor_id': {'type': 'int(6) unsigned', 'constraint': ''},
+        'house_id': {'type': 'int(1)', 'constraint': 'default 1'},
+        'balance': {'type': 'decimal(8, 2)', 'constraint': 'not null'},
+        'contact_email': {'type': 'varchar(100)', 'constraint': 'not null'},
+        'periodicity': {'type': 'varchar(20)', 'constraint': 'not null'},
+        'is_active': {'type': 'bool', 'constraint': 'default 1'}
+    }
 }
 
 CONTENT_WRITERS = {
     'table_name': 'content_writers',
-    'columns': ['emp_id', 'ssn', 'name', 'gender', 'age', 'phone_number', 'job_title']
+    'columns': {
+        'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
+        'ssn': {'type': 'varchar(12)', 'constraint': 'not null unique'},
+        'name': {'type': 'varchar(100)', 'constraint': 'not null'},
+        'gender': {'type': 'varchar(1)', 'constraint': ''},
+        'age': {'type': 'int(2) unsigned', 'constraint': ''},
+        'phone_number': {'type': 'int(10) unsigned', 'constraint': 'not null'},
+        'job_title': {'type': 'varchar(20)', 'constraint': 'not null'}
+    }
 }
 
 EDITORS = {
     'table_name': 'editors',
-    'columns': ['emp_id', 'type']
+    'columns': {
+        'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
+        'type': {'type': 'varchar(20)', 'constraint': 'default \'staff\''}
+    }
 }
 
 AUTHORS = {
     'table_name': 'authors',
-    'columns': ['emp_id', 'type']
+    'columns': {
+        'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
+        'type': {'type': 'varchar(20)', 'constraint': 'default \'staff\''}
+    }
 }
 
 MANAGEMENT = {
     'table_name': 'management',
-    'columns': ['emp_id', 'ssn', 'name', 'gender', 'age', 'phone_number']
+    'columns': {
+        'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
+        'ssn': {'type': 'varchar(12)', 'constraint': 'not null unique'},
+        'name': {'type': 'varchar(100)', 'constraint': 'not null'},
+        'gender': {'type': 'varchar(1)', 'constraint': ''},
+        'age': {'type': 'int(2) unsigned', 'constraint': ''},
+        'phone_number': {'type': 'int(10) unsigned', 'constraint': 'not null'}
+    }
 }
 
 STAFF_PAYMENTS = {
     'table_name': 'staff_payments',
-    'columns': ['emp_id', 'payment_freq']
+    'columns': {
+        'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
+        'payment_freq': {'type': 'varchar(25)', 'constraint': 'not null'}
+    }
 }
 
 SALARY_PAYMENTS = {
     'table_name': 'salary_payments',
-    'columns': ['transaction_id', 'emp_id', 'house_id', 'amount', 'send_date', 'received_date']
+    'columns': {
+        'transaction_id': {'type': 'int(8) unsigned', 'constraint': 'auto_increment'},
+        'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
+        'house_id': {'type': 'int(1)', 'constraint': 'default 1'},
+        'amount': {'type': 'decimal(8, 2) unsigned', 'constraint': 'not null'},
+        'send_date': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'received_date': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'}
+    }
 }
 
 PUBLICATIONS = {
     'table_name': 'publications',
-    'columns': ['publication_id', 'title', 'topic', 'price', 'publication_date']
+    'columns': {
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
+        'title': {'type': 'varchar(100)', 'constraint': 'not null'},
+        'topic': {'type': 'varchar(20)', 'constraint': ''},
+        'price': {'type': 'decimal(3, 2)', 'constraint': 'not null'},
+        'publication_date': {'type': 'date', 'constraint': 'not null'}}
 }
 
 BOOKS = {
     'table_name': 'books',
-    'columns': ['publication_id', 'isbn', 'creation_date', 'edition', 'book_id', 'is_available']
+    'columns': {
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'isbn': {'type': 'varchar(17)', 'constraint': 'not null unique'},
+        'creation_date': {'type': 'date', 'constraint': 'not null'},
+        'edition': {'type': 'int(2)', 'constraint': 'not null'},
+        'book_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'is_available': {'type': 'bool', 'constraint': 'default 1'}
+    }
 }
 
 CHAPTERS = {
     'table_name': 'chapters',
-    'columns': ['chapter_id', 'publication_id', 'chapter_title', 'chapter_text']
+    'columns': {
+        'chapter_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'chapter_title': {'type': 'varchar(255)', 'constraint': 'not null'},
+        'chapter_text': {'type': 'text', 'constraint': 'not null'}
+    }
 }
 
 PERIODICALS = {
     'table_name': 'periodicals',
-    'columns': ['publication_id', 'issn', 'issue', 'periodical_type', 'periodical_id', 'is_available']
+    'columns': {
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'issn': {'type': 'varchar(17)', 'constraint': 'not null unique'},
+        'issue': {'type': 'varchar(10)', 'constraint': 'not null'},
+        'periodical_type': {'type': 'varchar(20)', 'constraint': 'not null'},
+        'periodical_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'is_available': {'type': 'bool', 'constraint': 'default 1'}
+    }
 }
 
 ARTICLES = {
     'table_name': 'articles',
-    'columns': ['article_id', 'publication_id', 'creation_date', 'topic', 'title', 'text', 'journalist_name']
+    'columns': {
+        'article_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'creation_date': {'type': 'date', 'constraint': 'not null'},
+        'topic': {'type': 'varchar(20)', 'constraint': 'not null'},
+        'title': {'type': 'varchar(100)', 'constraint': 'not null'},
+        'text': {'type': 'text', 'constraint': 'not null'},
+        'journalist_name': {'type': 'varchar(100)', 'constraint': 'not null'}
+    }
 }
 
 REVIEW_PUBLICATION = {
     'table_name': 'review_publications',
-    'columns': ['emp_id', 'publication_id']
+    'columns': {
+        'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'}
+    }
 }
 
 WRITE_BOOKS = {
     'table_name': 'write_books',
-    'columns': ['emp_id', 'publication_id']
+    'columns': {
+        'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'}
+    }
 }
 
 ORDERS = {
     'table_name': 'orders',
-    'columns': ['order_id', 'account_id', 'order_date', 'shipping_cost', 'delivery_date', 'total_price']
+    'columns': {
+        'order_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
+        'account_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'order_date': {'type': 'date', 'constraint': 'not null'},
+        'shipping_cost': {'type': 'decimal(8, 2) unsigned', 'constraint': 'not null'},
+        'delivery_date': {'type': 'date', 'constraint': 'not null'},
+        'total_price': {'type': 'decimal(8, 2) unsigned', 'constraint': 'not null'}
+    }
 }
 
 BOOK_ORDERS_INFO = {
     'table_name': 'book_orders_info',
-    'columns': ['order_id', 'publication_id', 'quantity', 'price']
+    'columns': {
+        'order_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'quantity': {'type': 'int(4) unsigned', 'constraint': 'default 1'},
+        'price': {'type': 'decimal(3, 2) unsigned', 'constraint': 'not null'}
+    }
 }
 
 PERIODICAL_ORDERS_INFO = {
     'table_name': 'periodical_orders_info',
-    'columns': ['order_id', 'publication_id', 'quantity', 'price']
+    'columns': {
+        'order_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'quantity': {'type': 'int(4) unsigned', 'constraint': 'default 1'},
+        'price': {'type': 'decimal(3, 2) unsigned', 'constraint': 'not null'}
+    }
 }
 
 ACCOUNT_BILLS = {
     'table_name': 'account_bills',
-    'columns': ['bill_id', 'account_id', 'amount', 'bill_date']
+    'columns': {
+        'bill_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
+        'account_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'amount': {'type': 'decimal(8, 2)', 'constraint': 'not null'},
+        'bill_date': {'type': 'date', 'constraint': 'not null'}
+    }
+}
+
+ACCOUNT_HOUSES_INFO = {
+    'table_name': 'account_houses_info',
+    'columns': {
+        'account_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'house_id': {'type': 'int(1)', 'constraint': 'default 1'}
+    }
 }
 
 ACCOUNT_PAYMENTS = {
     'table_name': 'account_payments',
-    'columns': ['payment_id', 'account_id', 'amount', 'payment_date']
+    'columns': {
+        'payment_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'account_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'amount': {'type': 'decimal(5, 2)', 'constraint': 'not null'},
+        'payment_date': {'type': 'date', 'constraint': 'not null'}
+    }
+}
+
+REPORTS = {
+    'table_name': 'records',
+    'columns': {
+        'record_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'month': {'type': 'int(2)', 'constraint': 'not null'},
+        'year': {'type': 'int(4)', 'constraint': 'not null'},
+        'total_expense': {'type': 'decimal(8, 2)', 'constraint': 'not null'},
+        'total_revenue': {'type': 'decimal(8, 2)', 'constraint': 'not null'}
+    }
 }

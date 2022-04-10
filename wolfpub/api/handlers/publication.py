@@ -16,7 +16,7 @@ class PublicationHandler(object):
         self.table_name = PUBLICATIONS['table_name']
         self.primary_key = 'publication_id'
         self.secondary_key = []
-        self.columns = PUBLICATIONS['columns']
+        self.columns = PUBLICATIONS['columns'].keys()
         self.query_gen = QueryGenerator()
 
     def reformat(self, obj):
@@ -70,7 +70,7 @@ class BookHandler(PublicationHandler):
         super().__init__(db)
         self.table_name = BOOKS['table_name']
         self.secondary_key = ['book_id', 'edition']
-        self.columns = BOOKS['columns']
+        self.columns = BOOKS['columns'].keys()
 
     def get(self, publication_id: str):
         cond = {'emp_id': publication_id}
@@ -115,7 +115,7 @@ class PeriodicalHandler(PublicationHandler):
         super().__init__(db)
         self.table_name = PERIODICALS['table_name']
         self.secondary_key = ['periodical_id', 'issue']
-        self.columns = PERIODICALS['columns']
+        self.columns = PERIODICALS['columns'].keys()
 
     def get(self, publication_id: str):
         cond = {'emp_id': publication_id}
