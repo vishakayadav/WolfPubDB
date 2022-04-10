@@ -1,8 +1,8 @@
 """
 Module with pytest fixtures
 """
-from pytest_mysql import factories
 import pytest
+from pytest_mysql import factories
 
 mysql_in_docker = factories.mysql_noproc()
 mysql = factories.mysql('mysql_in_docker')

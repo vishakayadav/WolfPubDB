@@ -11,7 +11,7 @@ load_dotenv()
 
 CONFIG_PARSER = ConfigParser(os.environ)
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings.conf')
-CONFIG_PARSER.readfp(open(CONFIG_FILE))
+CONFIG_PARSER.read_file(open(CONFIG_FILE))
 
 BASE_DIR = os.getcwd()
 
