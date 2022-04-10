@@ -130,7 +130,7 @@ class BookHandler(PublicationHandler):
         self.chapter_table_name = CHAPTERS['table_name']
         self.secondary_key = set()
         self.secondary_key.update(['book_id', 'edition'])
-        self.columns = list(PUBLICATIONS['columns'].keys()) + list(BOOKS['columns'].keys())
+        self.columns = list(set(list(PUBLICATIONS['columns'].keys()) + list(BOOKS['columns'].keys())))
         self.book_filter_table_name = f"{PUBLICATIONS['table_name']} natural join " \
                                  f"{BOOKS['table_name']}"
         self.book_author_table_name = WRITE_BOOKS['table_name']
@@ -138,6 +138,7 @@ class BookHandler(PublicationHandler):
     def get(self, publication_id: str):
         cond = {'publication_id': publication_id, 'is_available': 1}
         select_query = self.query_gen.select(self.table_name, ['*'], cond)
+        print(select_query)
         return self.db.get_result(select_query)
 
     def set(self, book: dict):
@@ -250,6 +251,46 @@ class BookHandler(PublicationHandler):
         row_affected, _ = self.db.execute([delete_query])
         return row_affected
 
+    @staticmethod
+    def generate_random_isbn():
+        randnum = str(random.randrange(10 ** 12, 10 ** 13))
+        isbn = randnum[0:3] + "-" + randnum[3] + "-" + randnum[4:6] + "-" + randnum[6:12] + "-" + randnum[12]
+        return isbn
+
+    def get_id(self, title):
+        try:
+            cond1 = {'title': title}
+            select_query = self.query_gen.select(self.parent_table_name, ['*'], cond1)
+            response = self.db.get_result(select_query)
+            if len(response) == 0:
+                return None
+            publication_id = response[0]['publication_id']
+            cond2 = {'publication_id': publication_id, 'is_available': 1}
+            select_query = self.query_gen.select(self.table_name, ['*'], cond2)
+            response = self.db.get_result(select_query)
+            if len(response) == 0:
+                return None
+            book_id = response[0]['book_id']
+            return {'book_id': book_id}
+        except MariaDBException as e:
+            raise e
+
+    def get_edition(self, book_id):
+        cond = {'book_id': book_id, 'is_available': 1}
+        select_query = self.query_gen.select(self.table_name, ['max(edition) as latest_edition'], cond)
+        response = self.db.get_result(select_query)
+        if len(response) == 0:
+            return 1
+        return response[0]['edition']
+
+    def new_book_id(self):
+        select_query = self.query_gen.select(self.table_name, ['max(book_id) as book_count'], None)
+        response = self.db.get_result(select_query)
+        if len(response) == 0:
+            return 1
+        book_count = response[0]['book_count']
+        return book_count+1
+
 
 class PeriodicalHandler(PublicationHandler):
     """
@@ -263,7 +304,7 @@ class PeriodicalHandler(PublicationHandler):
         self.article_table_name = ARTICLES['table_name']
         self.secondary_key = set()
         self.secondary_key.update(['periodical_id', 'issue'])
-        self.columns = list(PUBLICATIONS['columns'].keys()) + list(PERIODICALS['columns'].keys())
+        self.columns = list(set(list(PUBLICATIONS['columns'].keys()) + list(PERIODICALS['columns'].keys())))
         self.article_filter_table_name = f"{PERIODICALS['table_name']} natural join " \
                                       f"{ARTICLES['table_name']}"
         self.article_author_table_name = WRITE_ARTICLES['table_name']

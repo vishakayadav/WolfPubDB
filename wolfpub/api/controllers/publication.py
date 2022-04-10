@@ -164,7 +164,7 @@ class Publication(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
-    @ns.doc(PUBLICATION_ALL_ARGUMENTS, validate=False, required=False)
+    @ns.doc(PUBLICATION_ALL_ARGUMENTS, validate=False)
     def put(self, publication_id):
         """
         End-point to update the publication
@@ -251,7 +251,7 @@ class Chapter(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
-    @ns.doc(CHAPTER_ARGUMENTS, validate=False, required=False)
+    @ns.doc(CHAPTER_ARGUMENTS, validate=False)
     def put(self, publication_id, chapter_id):
         """
         End-point to update the chapter
@@ -323,7 +323,7 @@ class Article(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
-    @ns.doc(ARTICLE_ARGUMENTS, validate=False, required=False)
+    @ns.doc(ARTICLE_ARGUMENTS, validate=False)
     def put(self, publication_id, article_id):
         """
         End-point to update the article
