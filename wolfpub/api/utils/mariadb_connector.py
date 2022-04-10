@@ -16,7 +16,7 @@ class MariaDBConnector(object):
 
     def connect(self):
         try:
-            self.conn = mariadb.connect(
+            return mariadb.connect(
                 user=self.user,
                 password=self.password,
                 host=self.host,
@@ -28,18 +28,14 @@ class MariaDBConnector(object):
 
     def get_cursor(self):
         try:
-            self.connect()
+            self.conn = self.connect()
             return self.conn.cursor()
         except mariadb.Error as e:
             logger.error(e)
             raise MariaDBException(f'Error in getting cursor for MariaDB: {e}')
 
-    def execute(self, queries: list, conn=None):
-        if conn:
-            cur = conn.cursor()
-            self.conn = conn
-        else:
-            cur = self.get_cursor()
+    def execute(self, queries: list):
+        cur = self.get_cursor()
         self.conn.autocommit = False
         last_row_ids = []
         try:
@@ -63,12 +59,8 @@ class MariaDBConnector(object):
             logger.error(e)
             raise MariaDBException(e)
 
-    def get_result(self, query: str, conn=None):
-        if conn:
-            cur = conn.cursor()
-            self.conn = conn
-        else:
-            cur = self.get_cursor()
+    def get_result(self, query: str):
+        cur = self.get_cursor()
         self._execute(query, cur)
         rows = cur.fetchall()
         desc = cur.description
