@@ -40,9 +40,12 @@ class DistributorHandler(object):
     def remove(self, distributor_id: str):
         cond = {'distributor_id': distributor_id, 'is_active': 1}
         update_data = {'is_active': 0}
-        balance = AccountHandler(self.db).check_balance(distributor_id)
-        if balance:
-            raise UnauthorizedOperation("Settle the Account's balance before deleting")
+        try:
+            balance = AccountHandler(self.db).check_balance(distributor_id)
+            if balance:
+                raise UnauthorizedOperation("Settle the Account's balance before deleting")
+        except ValueError:
+            pass
         update_data = self.query_gen.update(self.table_name, cond, update_data)
         row_affected, _ = self.db.execute([update_data])
         return row_affected

@@ -1,12 +1,12 @@
 DISTRIBUTORS = {
     'table_name': 'distributors',
     'columns': {
-        'distributor_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
+        'distributor_id': {'type': 'int(6) unsigned', 'constraint': 'primary key auto_increment'},
         'name': {'type': 'varchar(200)', 'constraint': 'not null'},
         'distributor_type': {'type': 'varchar(20)', 'constraint': ''},
         'address': {'type': 'varchar(100)', 'constraint': 'not null'},
         'city': {'type': 'varchar(20)', 'constraint': 'not null'},
-        'phone_number': {'type': 'int(10)', 'constraint': ''},
+        'phone_number': {'type': 'bigint(10)', 'constraint': ''},
         'contact_person': {'type': 'varchar(100)', 'constraint': ''},
         'is_active': {'type': 'bool', 'constraint': 'default 1'}
     }
@@ -15,7 +15,7 @@ DISTRIBUTORS = {
 ACCOUNTS = {
     'table_name': 'accounts',
     'columns': {
-        'account_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
+        'account_id': {'type': 'int(6) unsigned', 'constraint': 'primary key auto_increment'},
         'distributor_id': {'type': 'int(6) unsigned', 'constraint': ''},
         'house_id': {'type': 'int(1)', 'constraint': 'default 1'},
         'balance': {'type': 'decimal(8, 2)', 'constraint': 'not null'},
@@ -77,19 +77,19 @@ STAFF_PAYMENTS = {
 SALARY_PAYMENTS = {
     'table_name': 'salary_payments',
     'columns': {
-        'transaction_id': {'type': 'int(8) unsigned', 'constraint': 'auto_increment'},
+        'transaction_id': {'type': 'int(8) unsigned', 'constraint': 'primary key auto_increment'},
         'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
         'house_id': {'type': 'int(1)', 'constraint': 'default 1'},
         'amount': {'type': 'decimal(8, 2) unsigned', 'constraint': 'not null'},
         'send_date': {'type': 'int(6) unsigned', 'constraint': 'not null'},
-        'received_date': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'}
+        'received_date': {'type': 'int(6) unsigned', 'constraint': ''}
     }
 }
 
 PUBLICATIONS = {
     'table_name': 'publications',
     'columns': {
-        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'primary key auto_increment'},
         'title': {'type': 'varchar(100)', 'constraint': 'not null'},
         'topic': {'type': 'varchar(20)', 'constraint': ''},
         'price': {'type': 'decimal(3, 2)', 'constraint': 'not null'},
@@ -162,7 +162,7 @@ WRITE_BOOKS = {
 ORDERS = {
     'table_name': 'orders',
     'columns': {
-        'order_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
+        'order_id': {'type': 'int(6) unsigned', 'constraint': 'primary key auto_increment'},
         'account_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
         'order_date': {'type': 'date', 'constraint': 'not null'},
         'shipping_cost': {'type': 'decimal(8, 2) unsigned', 'constraint': 'not null'},
@@ -194,7 +194,7 @@ PERIODICAL_ORDERS_INFO = {
 ACCOUNT_BILLS = {
     'table_name': 'account_bills',
     'columns': {
-        'bill_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
+        'bill_id': {'type': 'int(6) unsigned', 'constraint': 'primary key auto_increment'},
         'account_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
         'amount': {'type': 'decimal(8, 2)', 'constraint': 'not null'},
         'bill_date': {'type': 'date', 'constraint': 'not null'}

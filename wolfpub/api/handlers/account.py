@@ -42,6 +42,8 @@ class AccountHandler(object):
         cond = {'account_id': account_id}
         select_query = self.query_gen.select(self.table_name, ['balance'], cond)
         balance = self.db.get_result(select_query)
+        if not balance:
+            raise ValueError('Account not registered with Wolf Publication House')
         return float(balance[0]['balance']) if balance else 0.00
 
 
