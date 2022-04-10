@@ -8,7 +8,6 @@ from wolfpub.api.utils.mariadb_connector import MariaDBConnector
 from wolfpub.constants import DISTRIBUTORS
 
 mariadb = MariaDBConnector()
-table_dict = DISTRIBUTORS
 
 
 class TestExecute(object):
@@ -45,24 +44,24 @@ class TestGetResult(object):
     """
 
     @staticmethod
-    def test_get_result(mocker, mock_mysql, mock_table, add_record):
+    def test_get_result(mocker, mock_mysql, distributors_table, mock_table, add_record):
         """
         Positive Test Case
         """
-        first_col = list(table_dict['columns'].keys())[0]
-        query = f"select {first_col} from {table_dict['table_name']}"
+        first_col = list(DISTRIBUTORS['columns'].keys())[0]
+        query = f"select {first_col} from {DISTRIBUTORS['table_name']}"
         mocker.patch('wolfpub.api.utils.mariadb_connector.MariaDBConnector.connect', return_value=mock_mysql)
         result = mariadb.get_result(query)
         assert len(result) == 1
         assert result[0] == {first_col: 1}
 
     @staticmethod
-    def test_get_result_zero_rows(mocker, mock_mysql, mock_table):
+    def test_get_result_zero_rows(mocker, mock_mysql, distributors_table, mock_table):
         """
         Positive Test Case
         """
-        first_col = list(table_dict['columns'].keys())[0]
-        query = f"select {first_col} from {table_dict['table_name']}"
+        first_col = list(DISTRIBUTORS['columns'].keys())[0]
+        query = f"select {first_col} from {DISTRIBUTORS['table_name']}"
         mocker.patch('wolfpub.api.utils.mariadb_connector.MariaDBConnector.connect', return_value=mock_mysql)
         result = mariadb.get_result(query)
         assert len(result) == 0

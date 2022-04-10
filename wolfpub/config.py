@@ -2,9 +2,10 @@
 Contains configurations, Each module will pick configuration from here.
 """
 
-from configparser import ConfigParser
 import os
 from ast import literal_eval
+from configparser import ConfigParser
+
 from dotenv import load_dotenv
 
 load_dotenv()
