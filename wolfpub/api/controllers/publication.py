@@ -6,12 +6,15 @@ import json
 
 from flask import request
 from flask_restplus import Resource
+from datetime import date, datetime
 
 from wolfpub.api.handlers.publication import PublicationHandler
 from wolfpub.api.handlers.publication import BookHandler
 from wolfpub.api.handlers.publication import PeriodicalHandler
 
 from wolfpub.api.models.serializers import PUBLICATION_ARGUMENTS
+from wolfpub.api.models.serializers import BOOK_ARGUMENTS
+from wolfpub.api.models.serializers import PERIODICAL_ARGUMENTS
 from wolfpub.api.models.serializers import CHAPTER_ARGUMENTS
 from wolfpub.api.models.serializers import ARTICLE_ARGUMENTS
 from wolfpub.api.restplus import api
@@ -27,57 +30,106 @@ book_handler = BookHandler(mariadb)
 periodical_handler = PeriodicalHandler(mariadb)
 
 
-@ns.route("")
-class Publication(Resource):
+@ns.route("/book")
+class Book(Resource):
     """
-    Focuses on publication operations in WolfPubDB.
+    Focuses on book operations in WolfPubDB.
     """
 
-    @ns.expect(PUBLICATION_ARGUMENTS, validate=True)
+    @ns.expect(PUBLICATION_ARGUMENTS, BOOK_ARGUMENTS, validate=True)
     def post(self):
         """
-        End-point to creating new publication
+        End-point to create new book
         """
         try:
             publication = json.loads(request.data)
-            publication_type = request.args.get('publication', None)
-            publication['publication_type'] = publication_type
-
+            isbn = publication.pop('isbn', None)
+            if isbn is None:
+                isbn = book_handler.generate_random_isbn()
+            creation_date = publication.pop('creation_date')
+            publication_date = publication.get('publication_date')
+            if datetime.strptime(creation_date, "%Y-%m-%d").date() > datetime.strptime(publication_date, "%Y-%m-%d").date():
+                raise ValueError('Creation date has to be before publication date')
+            is_available = int(publication.pop('is_available', 1))
             book = {
-                'isbn': '<>',
-                'creation_date': '<>',
-                'edition': '<>',
-                'book_id': '<>',
-                'is_available': '<>'
+                'isbn': isbn,
+                'edition': 1,
+                'creation_date': creation_date,
+                'is_available': is_available
             }
-
-            periodical = {
-                'issn': '<>',
-                'issue': '<>',
-                'periodical_type': '<>',
-                'periodical_id': '<>',
-                'is_available': '<>'
-            }
-            if publication not in ['book', 'periodical']:
-                raise ValueError('A publication must either be a book or a periodical')
-
-            publication_id = publication_handler.set(publication)
-            if publication_type == "book":
-                book.update(publication_id)
-                book_handler.set(book)
+            book_id = book_handler.get_id(publication.get('Title', None))
+            print(book_id)
+            if book_id is not None:
+                book['book_id'] = book_id
+                edition = book_handler.get_edition(book_id)
+                book['edition'] = edition
             else:
-                periodical.update(publication_id)
-                periodical_handler.set(periodical)
-
+                book['book_id'] = book_handler.new_book_id()
+            print(publication)
+            print(book)
+            publication_id = publication_handler.set(publication)
+            book.update(publication_id)
+            book_handler.set(book)
             return CustomResponse(data=publication_id)
-        except (QueryGenerationException, MariaDBException, ValueError) as e:
+        except (QueryGenerationException, MariaDBException, ValueError, KeyError) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+        except Exception as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/periodical")
+class Periodical(Resource):
+    """
+    Focuses on periodical operations in WolfPubDB.
+    """
+
+    @ns.expect(PUBLICATION_ARGUMENTS, PERIODICAL_ARGUMENTS, validate=True)
+    def post(self):
+        """
+        End-point to create new periodical
+        """
+        try:
+            publication = json.loads(request.data)
+            issn = publication.pop('issn', None)
+            if issn is None:
+                issn = periodical_handler.generate_random_issn()
+            issue = publication.pop('issue')
+            periodical_type = publication.pop('periodical_type')
+            if periodical_type == "Magazine" and not issue.startswith('Week'):
+                raise ValueError("Magazines must be published weekly. Expected input format - `Week<num>`")
+            elif periodical_type == "Journal" and not issue.startswith('Month'):
+                raise ValueError("Journals must be published monthly. Expected input format - `Month<num>`")
+            elif periodical_type not in ["Magazine", "Journal"]:
+                raise ValueError("Periodicals must either be a magazine or a journal")
+            is_available = int(publication.pop('is_available', 1))
+            periodical = {
+                'issn': issn,
+                'issue': issue,
+                'publication_type': periodical_type,
+                'is_available': is_available
+            }
+            periodical_id = periodical_handler.get_id(publication.get('Title', None))
+            print(periodical_id)
+            if periodical_id is not None:
+                periodical['periodical_id'] = periodical_id
+            else:
+                periodical['periodical_id'] = periodical_handler.new_periodical_id()
+            print(publication)
+            print(periodical)
+            publication_id = publication_handler.set(publication)
+            periodical.update(publication_id)
+            periodical_handler.set(periodical)
+            return CustomResponse(data=publication_id)
+        except (QueryGenerationException, MariaDBException, ValueError, KeyError) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+        except Exception as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
 @ns.route("/<string:publication_id>")
 class Publication(Resource):
     """
-    Focuses on fetching, updating and deleting publication details from WolfPubDB.
+    Focuses on publication operations in WolfPubDB.
     """
 
     def get(self, publication_id):
@@ -86,20 +138,38 @@ class Publication(Resource):
         """
         try:
             output = publication_handler.get_by_id(publication_id)
-            if len(output) > 0:
-                return CustomResponse(data=output[0])
-            return CustomResponse(data={}, message=f"Publication with id '{publication_id}' not found",
-                                  status_code=404)
+            if len(output) == 0:
+                return CustomResponse(data={}, message=f"Publication with id '{publication_id}' not found",
+                                      status_code=404)
+            publication = output[0]
+            book_output = book_handler.get(publication_id)
+            if len(book_output) > 0:
+                publication.update(book_output[0])
+            else:
+                periodical_output = periodical_handler.get(publication_id)
+                if len(periodical_output) > 0:
+                    publication.update(periodical_output[0])
+                else:
+                    return CustomResponse(data={}, message=f"Publication with id '{publication_id}' not found",
+                                          status_code=404)
+
+            return CustomResponse(data=publication)
+
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
-    @ns.expect(PUBLICATION_ARGUMENTS, validate=False, required=False)
-    def put(self, publication_id):  # TODO
+    @ns.expect(PUBLICATION_ARGUMENTS, BOOK_ARGUMENTS, PERIODICAL_ARGUMENTS, validate=False, required=False)
+    def put(self, publication_id):
         """
         End-point to update the publication
         """
         try:
-            return 0
+            publication = json.loads(request.data)
+            row_affected = publication_handler.update(publication_id, publication)
+            if row_affected < 1:
+                return CustomResponse(data={}, message=f"No updates made for publication with id '{publication}'",
+                                      status_code=404)
+            return CustomResponse(data={}, message="Publication details updated")
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
@@ -108,29 +178,36 @@ class Publication(Resource):
         End-point to delete publication
         """
         try:
-            row_affected = publication_handler.remove(publication_id)
-            if row_affected < 1:
+            output = publication_handler.get_by_id(publication_id)
+            if len(output) == 0:
                 return CustomResponse(data={}, message=f"Publication with id '{publication_id}' not found",
                                       status_code=404)
             else:
+                book_row_affected = book_handler.remove(publication_id)
+                if book_row_affected < 1:
+                    periodical_row_affected = periodical_handler.remove(publication_id)
+                    if periodical_row_affected < 1:
+                        return CustomResponse(data={}, message=f"Publication with id '{publication_id}' not found",
+                                              status_code=404)
                 return CustomResponse(data={}, message="Publication is deleted")
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
+
 @ns.route("/<string:publication_id>/chapter")
 class Chapter(Resource):
     """
-    Focuses on publication operations in WolfPubDB.
+    Focuses on chapter operations in WolfPubDB.
     """
 
-    @ns.expect(PUBLICATION_ARGUMENTS, validate=True)
+    @ns.expect(CHAPTER_ARGUMENTS, validate=True)
     def post(self):
         """
-        End-point to creating new publication
+        End-point to create new chapter
         """
         try:
             chapter = json.loads(request.data)
-            chapter_id = publication_handler.set(chapter)
+            chapter_id = book_handler.set_chapter(chapter)
             return CustomResponse(data=chapter_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -138,37 +215,42 @@ class Chapter(Resource):
 
 @ns.route("/<string:publication_id>/chapter/<string:chapter_id>")
 class Chapter(Resource):
-
     """
-    Focuses on fetching, updating and deleting chapter details from WolfPubDB.
+    Focuses on chapter operations in WolfPubDB.
     """
 
     def get(self, publication_id, chapter_id):
         """
-        End-point to get the existing publication details
+        End-point to get the existing chapter details
         """
         try:
             output = book_handler.get_chapter(publication_id, chapter_id)
             if len(output) > 0:
                 return CustomResponse(data=output[0])
-            return CustomResponse(data={}, message=f"Chapter with id '{chapter_id}' for publication with id '{publication_id}' not found",
+            return CustomResponse(data={},
+                                  message=f"Chapter with id '{chapter_id}' for publication with id '{publication_id}' not found",
                                   status_code=404)
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
     @ns.expect(CHAPTER_ARGUMENTS, validate=False, required=False)
-    def put(self, publication_id, chapter_id):  # TODO
+    def put(self, publication_id, chapter_id):
         """
-        End-point to update the publication
+        End-point to update the chapter
         """
         try:
-            return 0
+            chapter = json.loads(request.data)
+            row_affected = book_handler.update_chapter(publication_id, chapter_id, chapter)
+            if row_affected < 1:
+                return CustomResponse(data={}, message=f"No updates made for chapter with id '{chapter_id}' for publication with id '{publication_id}'",
+                                      status_code=404)
+            return CustomResponse(data={}, message="Chapter details updated")
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
     def delete(self, publication_id, chapter_id):
         """
-        End-point to delete publication
+        End-point to delete chapter
         """
         try:
             row_affected = book_handler.remove_chapter(publication_id, chapter_id)
@@ -184,13 +266,13 @@ class Chapter(Resource):
 @ns.route("/<string:publication_id>/article")
 class Article(Resource):
     """
-    Focuses on publication operations in WolfPubDB.
+    Focuses on article operations in WolfPubDB.
     """
 
     @ns.expect(ARTICLE_ARGUMENTS, validate=True)
     def post(self):
         """
-        End-point to creating new publication
+        End-point to create new article
         """
         try:
             article = json.loads(request.data)
@@ -203,12 +285,12 @@ class Article(Resource):
 @ns.route("/<string:publication_id>/article/<string:article_id>")
 class Article(Resource):
     """
-    Focuses on fetching, updating and deleting chapter details from WolfPubDB.
+    Focuses on article operations in WolfPubDB.
     """
 
     def get(self, publication_id, article_id):
         """
-        End-point to get the existing publication details
+        End-point to get the existing article details
         """
         try:
             output = periodical_handler.get_article(publication_id, article_id)
@@ -221,18 +303,24 @@ class Article(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
     @ns.expect(ARTICLE_ARGUMENTS, validate=False, required=False)
-    def put(self, publication_id, article_id):  # TODO
+    def put(self, publication_id, article_id):
         """
-        End-point to update the publication
+        End-point to update the article
         """
         try:
-            return 0
+            article = json.loads(request.data)
+            row_affected = periodical_handler.update_article(publication_id, article_id, article)
+            if row_affected < 1:
+                return CustomResponse(data={},
+                                      message=f"No updates made for article with id '{article_id}' for publication with id '{publication_id}'",
+                                      status_code=404)
+            return CustomResponse(data={}, message="Article details updated")
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
     def delete(self, publication_id, article_id):
         """
-        End-point to delete publication
+        End-point to delete article
         """
         try:
             row_affected = periodical_handler.remove_article(publication_id, article_id)

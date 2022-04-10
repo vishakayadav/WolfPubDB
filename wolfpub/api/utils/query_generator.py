@@ -88,7 +88,7 @@ class QueryGenerator(object):
         for key, value in update_data.items():
             if isinstance(value, dict) and any(k in self.set_operators for k in value):
                 set_values.append(self.handling_set_operator(key, value))
-            elif isinstance(value, str) or isinstance(value, int):
+            elif isinstance(value, str) or isinstance(value, int) or isinstance(value, float):
                 set_values.append(f"{key}='{value}'")
             else:
                 error_msg = 'Update Query Generator does not support list or dictionary values'

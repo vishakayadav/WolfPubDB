@@ -93,7 +93,6 @@ EDITOR_ARGUMENTS = api.model("Editor_Model", {
 })
 
 PUBLICATION_ARGUMENTS = api.model("Publication_Model", {
-    "publication_id": fields.String(min_length=1, max_length=6, required=True),
     "title": fields.String(min_length=1, max_length=200, required=True),
     "topic": fields.String(min_length=1, max_length=200, required=True),
     "publication_date": fields.Date(required=True),
@@ -101,33 +100,31 @@ PUBLICATION_ARGUMENTS = api.model("Publication_Model", {
 })
 
 BOOK_ARGUMENTS = api.model("Book_Model", {
-    "publication_id": fields.String(min_length=1, max_length=6, required=True),
-    "isbn": fields.String(min_length=1, max_length=13, pattern='\\d{*}-\\d{*}-\\d{*}-\\d{*}', required=True),
+    "isbn": fields.String(min_length=1, max_length=20, pattern='\\d{3}-\\d{1}-\\d{2}-\\d{6}-\\d{1}', required=False),
     "creation_date": fields.Date(required=True),
-    "edition": fields.Integer(required=True, default=1),
-    "book_id": fields.String(min_length=1, max_length=6, required=True),
+    # "edition": fields.Integer(required=True, default=1),
+    # "book_id": fields.String(min_length=1, max_length=6, required=False),
     "is_available": fields.Boolean(default=True)
 })
 
 PERIODICAL_ARGUMENTS = api.model("Periodical_Model", {
-    "publication_id": fields.String(min_length=1, max_length=6, required=True),
-    "issn": fields.String(min_length=1, max_length=8, pattern='\\d{4}-\\d{4}', required=True),
-    "issue": fields.Integer(required=True, default=1),
+    "issn": fields.String(min_length=1, max_length=8, pattern='\\d{4}-\\d{4}', required=False),
+    "issue": fields.String(min_length=1, max_length=12, required=True),
     "periodical_type": fields.String(min_length=1, max_length=10, required=True),
-    "periodical_id": fields.String(min_length=1, max_length=6, required=True),
+    # "periodical_id": fields.String(min_length=1, max_length=6, required=True),
     "is_available": fields.Boolean(default=True)
 })
 
 CHAPTER_ARGUMENTS = api.model("Chapter_Model", {
     "publication_id": fields.String(min_length=1, max_length=6, required=True),
-    "chapter_id": fields.String(min_length=1, max_length=6, required=True),
+    # "chapter_id": fields.String(min_length=1, max_length=6, required=True),
     "chapter_title": fields.String(min_length=1, max_length=200, required=True),
     "chapter_text": fields.String(min_length=1, max_length=2000, required=True)
 })
 
 ARTICLE_ARGUMENTS = api.model("Article_Model", {
     "publication_id": fields.String(min_length=1, max_length=6, required=True),
-    "article_id": fields.String(min_length=1, max_length=6, required=True),
+    # "article_id": fields.String(min_length=1, max_length=6, required=True),
     "creation_date": fields.Date(required=True),
     "topic": fields.String(min_length=1, max_length=200, required=True),
     "title": fields.String(min_length=1, max_length=200, required=True),
