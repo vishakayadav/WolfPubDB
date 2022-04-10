@@ -132,6 +132,15 @@ ARTICLE_ARGUMENTS = api.model("Article_Model", {
     "journalist_name": fields.String(min_length=1, max_length=200, required=True)
 })
 
+SALARY_PAYMENT_ARGUMENTS = api.model("Salary_Payment_Model", {
+    # "transaction_id": fields.String(min_length=1, max_length=6, required=True),
+    "emp_id": fields.String(min_length=1, max_length=6, required=True),
+    "house_id": fields.String(min_length=1, max_length=6, default=1),
+    "amount": fields.Float(required=True),
+    "send_date": fields.Date(required=True),
+    "received_date": fields.Date(required=False)
+})
+
 REGISTER_ARGUMENT = reqparse.RequestParser()
 REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)
 

@@ -26,6 +26,9 @@ def initialize_app(flask_app):
     blueprint = Blueprint('api', __name__, url_prefix=config.API_SETTINGS["URL_PREFIX"])
     api.init_app(blueprint)
 
+    from wolfpub.api.controllers.content_writers import ns as content_writers_ns
+    api.add_namespace(content_writers_ns)
+
     from wolfpub.api.controllers.distributor import ns as distributor_ns
     api.add_namespace(distributor_ns)
 
@@ -34,6 +37,9 @@ def initialize_app(flask_app):
 
     from wolfpub.api.controllers.content_writers import ns as content_writers_ns
     api.add_namespace(content_writers_ns)
+
+    from wolfpub.api.controllers.salary import ns as payment_ns
+    api.add_namespace(payment_ns)
 
     from wolfpub.api.controllers.report import ns as report_ns
     api.add_namespace(report_ns)
