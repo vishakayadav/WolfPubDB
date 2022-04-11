@@ -141,6 +141,15 @@ SALARY_PAYMENT_ARGUMENTS = api.model("Salary_Payment_Model", {
     "received_date": fields.Date(required=False)
 })
 
+PUBLICATION_AUTHOR_ARGUMENTS = api.model("Write_Publications_Model", {
+    "author": fields.List(fields.String(min_length=1, max_length=6, required=True), required=True),
+})
+
+PUBLICATION_EDITOR_ARGUMENTS = api.model("Review_Publications_Model", {
+    "editor": fields.List(fields.String(min_length=1, max_length=6, required=True), required=True),
+})
+
+
 REGISTER_ARGUMENT = reqparse.RequestParser()
 REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)
 

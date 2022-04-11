@@ -117,6 +117,31 @@ class Employees(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+@ns.route("/<string:emp_id>/publications")
+class Employees(Resource):
+    """
+    Focuses on viewing publications from WolfPubDB.
+    """
+
+    def get(self, emp_id: str):
+        """
+        End-point to get the associated publication details for employee
+        """
+        try:
+            output = employees_handler.get(emp_id)
+            if len(output) == 0:
+                return CustomResponse(data={}, message=f"Employee with id '{emp_id}' not found",
+                                  status_code=404)
+            publications = None
+            if emp_id[0].lower() == 'a':
+                publications = employees_handler.get_author_publications(emp_id)
+            elif emp_id[0].lower() == 'e':
+                publications = employees_handler.get_editor_publications(emp_id)
+            return CustomResponse(data=publications)
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
 @ns.route("/salaries")
 class Payment(Resource):
     """

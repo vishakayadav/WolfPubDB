@@ -5,7 +5,7 @@ Module for Handling Content Writers
 import random
 from wolfpub.api.utils.query_generator import QueryGenerator
 from wolfpub.api.utils.custom_response import CustomResponse
-from wolfpub.constants import EMPLOYEES
+from wolfpub.constants import EMPLOYEES, WRITE_PUBLICATION, REVIEW_PUBLICATION
 
 
 class EmployeesHandler(object):
@@ -16,6 +16,8 @@ class EmployeesHandler(object):
     def __init__(self, db):
         self.db = db
         self.table_name = EMPLOYEES['table_name']
+        self.author_table_name = WRITE_PUBLICATION['table_name']
+        self.editor_table_name = REVIEW_PUBLICATION['table_name']
         self.query_gen = QueryGenerator()
 
     @staticmethod
@@ -61,3 +63,13 @@ class EmployeesHandler(object):
         delete_query = self.query_gen.delete(self.table_name, cond)
         row_affected, _ = self.db.execute([delete_query])
         return row_affected
+
+    def get_author_publications(self, emp_id: str):
+        cond = {'emp_id': emp_id}
+        select_query = self.query_gen.select(self.author_table_name, ['*'], cond)
+        return self.db.get_result(select_query)
+
+    def get_editor_publications(self, emp_id: str):
+        cond = {'emp_id': emp_id}
+        select_query = self.query_gen.select(self.editor_table_name, ['*'], cond)
+        return self.db.get_result(select_query)

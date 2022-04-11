@@ -151,7 +151,7 @@ REVIEW_PUBLICATION = {
     }
 }
 
-WRITE_BOOKS = {
+WRITE_PUBLICATION = {
     'table_name': 'write_books',
     'columns': {
         'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},

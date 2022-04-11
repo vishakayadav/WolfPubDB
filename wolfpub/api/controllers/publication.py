@@ -17,6 +17,9 @@ from wolfpub.api.models.serializers import BOOK_ARGUMENTS
 from wolfpub.api.models.serializers import PERIODICAL_ARGUMENTS
 from wolfpub.api.models.serializers import CHAPTER_ARGUMENTS
 from wolfpub.api.models.serializers import ARTICLE_ARGUMENTS
+from wolfpub.api.models.serializers import PUBLICATION_AUTHOR_ARGUMENTS
+from wolfpub.api.models.serializers import PUBLICATION_EDITOR_ARGUMENTS
+
 from wolfpub.api.restplus import api
 from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException
 from wolfpub.api.utils.custom_response import CustomResponse
@@ -332,3 +335,122 @@ class Article(Resource):
                 return CustomResponse(data={}, message="Article is deleted")
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/<string:publication_id>/author")
+class Publication(Resource):
+    """
+    Focuses on publication associations in WolfPubDB.
+    """
+
+    @ns.expect(PUBLICATION_AUTHOR_ARGUMENTS, validate=True)
+    def post(self, publication_id):
+        """
+        End-point to associate authors with a publication
+        """
+        try:
+            output = publication_handler.get_by_id(publication_id)
+            if len(output) == 0:
+                return CustomResponse(data={}, message=f"Publication with id '{publication_id}' not found",
+                                      status_code=404)
+            authors = json.loads(request.data).pop("author", None)
+            if authors is None or len(authors) == 0:
+                raise ValueError('Must provide author IDs to associate with publication')
+            if len(authors) > 5:
+                raise ValueError('Can associate only 5 authors with a publication at a time')
+
+            authors_associated = 0
+            for author in authors:
+                association = {
+                    'emp_id': author,
+                    'publication_id': publication_id
+                }
+                publication_handler.set_author(association)
+                authors_associated += 1
+            return CustomResponse(data={}, message=f"'{authors_associated} authors added to publication with id '{publication_id}")
+
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/<string:publication_id>/editor")
+class Publication(Resource):
+    """
+    Focuses on publication associations in WolfPubDB.
+    """
+
+    @ns.expect(PUBLICATION_EDITOR_ARGUMENTS, validate=True)
+    def post(self, publication_id):
+        """
+        End-point to associate editors with a publication
+        """
+        try:
+            output = publication_handler.get_by_id(publication_id)
+            if len(output) == 0:
+                return CustomResponse(data={}, message=f"Publication with id '{publication_id}' not found",
+                                      status_code=404)
+            editors = json.loads(request.data).pop("editor", None)
+            if editors is None or len(editors) == 0:
+                raise ValueError('Must provide editor IDs to associate with publication')
+            if len(editors) > 5:
+                raise ValueError('Can associate only 5 editors with a publication at a time')
+
+            editors_associated = 0
+            for editor in editors:
+                association = {
+                    'emp_id': editor,
+                    'publication_id': publication_id
+                }
+                publication_handler.set_editor(association)
+                editors_associated += 1
+            return CustomResponse(data={}, message=f"'{editors_associated} editors added to publication with id '{publication_id}")
+
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/<string:publication_id>/author/<string:employee_id>")
+class Publication(Resource):
+    """
+    Focuses on publication associations in WolfPubDB.
+    """
+
+    def delete(self, publication_id, employee_id):
+        """
+        End-point to remove an author from a publication
+        """
+        try:
+            row_affected = publication_handler.remove_author(publication_id, employee_id)
+            if row_affected < 1:
+                return CustomResponse(data={},
+                                      message=f"Author with id '{employee_id}' for publication with id '{publication_id}' not found",
+                                      status_code=404)
+            else:
+                return CustomResponse(data={}, message=f"Author is removed for publication with id '{publication_id}'")
+
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
+@ns.route("/<string:publication_id>/editor/<string:employee_id>")
+class Publication(Resource):
+    """
+    Focuses on publication associations in WolfPubDB.
+    """
+
+    def delete(self, publication_id, employee_id):
+        """
+        End-point to remove an author from a publication
+        """
+        try:
+            row_affected = publication_handler.remove_editor(publication_id, employee_id)
+            if row_affected < 1:
+                return CustomResponse(data={},
+                                      message=f"Editor with id '{employee_id}' for publication with id '{publication_id}' not found",
+                                      status_code=404)
+            else:
+                return CustomResponse(data={}, message=f"Editor is removed for publication with id '{publication_id}'")
+
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+

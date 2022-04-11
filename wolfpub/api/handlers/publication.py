@@ -5,7 +5,8 @@ import random
 
 from wolfpub.api.utils.custom_exceptions import MariaDBException
 from wolfpub.api.utils.query_generator import QueryGenerator
-from wolfpub.constants import PUBLICATIONS, BOOKS, PERIODICALS, CHAPTERS, ARTICLES
+from wolfpub.constants import PUBLICATIONS, BOOKS, PERIODICALS, CHAPTERS, ARTICLES, \
+    WRITE_PUBLICATION, REVIEW_PUBLICATION
 
 
 class PublicationHandler(object):
@@ -16,6 +17,8 @@ class PublicationHandler(object):
     def __init__(self, db):
         self.db = db
         self.table_name = PUBLICATIONS['table_name']
+        self.author_table_name = WRITE_PUBLICATION['table_name']
+        self.editor_table_name = REVIEW_PUBLICATION['table_name']
         self.primary_key = 'publication_id'
         self.secondary_key = []
         self.columns = PUBLICATIONS['columns'].keys()
@@ -61,6 +64,28 @@ class PublicationHandler(object):
     def remove(self, publication_id: str):
         cond = {'publication_id': publication_id}
         delete_query = self.query_gen.delete(self.table_name, cond)
+        row_affected, _ = self.db.execute([delete_query])
+        return row_affected
+
+    def set_author(self, association):
+        insert_query = self.query_gen.insert(self.author_table_name, [association])
+        row_affected, _ = self.db.execute([insert_query])
+        return row_affected
+
+    def set_editor(self, association):
+        insert_query = self.query_gen.insert(self.editor_table_name, [association])
+        row_affected, _ = self.db.execute([insert_query])
+        return row_affected
+
+    def remove_author(self, publication_id: str, employee_id: str):
+        cond = {'publication_id': publication_id, 'emp_id': employee_id}
+        delete_query = self.query_gen.delete(self.author_table_name, cond)
+        row_affected, _ = self.db.execute([delete_query])
+        return row_affected
+
+    def remove_editor(self, publication_id: str, employee_id: str):
+        cond = {'publication_id': publication_id, 'emp_id': employee_id}
+        delete_query = self.query_gen.delete(self.editor_table_name, cond)
         row_affected, _ = self.db.execute([delete_query])
         return row_affected
 
@@ -163,7 +188,7 @@ class BookHandler(PublicationHandler):
         if len(response) == 0:
             return 1
         book_count = response[0]['book_count']
-        return book_count+1
+        return book_count + 1
 
 
 class PeriodicalHandler(PublicationHandler):
@@ -254,4 +279,4 @@ class PeriodicalHandler(PublicationHandler):
         if len(response) == 0:
             return 1
         periodical_count = response[0]['periodical_count']
-        return periodical_count+1
+        return periodical_count + 1
