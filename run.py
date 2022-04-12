@@ -11,7 +11,6 @@ def configure_app(flask_app):
     To set Swagger Configuration
     """
     flask_app.config['SWAGGER_UI_DOC_EXPANSION'] = config.RESTPLUS_SETTINGS["RESTPLUS_SWAGGER_UI_DOC_EXPANSION"]
-    flask_app.config['RESTPLUS_VALIDATE'] = config.RESTPLUS_SETTINGS["RESTPLUS_VALIDATE"]
     flask_app.config['RESTPLUS_MASK_SWAGGER'] = config.RESTPLUS_SETTINGS["RESTPLUS_MASK_SWAGGER"]
     flask_app.config['ERROR_404_HELP'] = config.RESTPLUS_SETTINGS["RESTPLUS_ERROR_404_HELP"]
     flask_app.config['SWAGGER'] = {"swagger_version": "2.0", "openapi": "3.0.0"}
