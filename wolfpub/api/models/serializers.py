@@ -140,7 +140,7 @@ ARTICLE_ARGUMENTS = api.model("Article_Model", {
     "creation_date": fields.Date(required=True),
     "topic": fields.String(min_length=1, max_length=200, required=True),
     "title": fields.String(min_length=1, max_length=200, required=True),
-    "text": fields.String(min_length=1, max_length=2000, required=True),
+    "text": fields.String(min_length=1, max_length=2000, required=True)
 })
 
 SALARY_PAYMENT_ARGUMENTS = api.model("Salary_Payment_Model", {

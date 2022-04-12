@@ -44,7 +44,7 @@ class PublicationHandler(object):
         return self.db.get_result(select_query)
 
     def get_ids(self, condition):
-        self.secondary_key.append(self.primary_key)
+        self.secondary_key.add(self.primary_key)
         self.reformat(condition)
         table = self.table_name
         if table != PUBLICATIONS['table_name']:
@@ -138,7 +138,6 @@ class BookHandler(PublicationHandler):
     def get(self, publication_id: str):
         cond = {'publication_id': publication_id, 'is_available': 1}
         select_query = self.query_gen.select(self.table_name, ['*'], cond)
-        print(select_query)
         return self.db.get_result(select_query)
 
     def set(self, book: dict):
@@ -257,7 +256,7 @@ class BookHandler(PublicationHandler):
         isbn = randnum[0:3] + "-" + randnum[3] + "-" + randnum[4:6] + "-" + randnum[6:12] + "-" + randnum[12]
         return isbn
 
-    def get_id(self, title):
+    def get_id_from_title(self, title):
         try:
             cond1 = {'title': title}
             select_query = self.query_gen.select(self.parent_table_name, ['*'], cond1)
@@ -271,7 +270,7 @@ class BookHandler(PublicationHandler):
             if len(response) == 0:
                 return None
             book_id = response[0]['book_id']
-            return {'book_id': book_id}
+            return book_id
         except MariaDBException as e:
             raise e
 
@@ -281,7 +280,7 @@ class BookHandler(PublicationHandler):
         response = self.db.get_result(select_query)
         if len(response) == 0:
             return 1
-        return response[0]['edition']
+        return response[0]['latest_edition']
 
     def new_book_id(self):
         select_query = self.query_gen.select(self.table_name, ['max(book_id) as book_count'], None)
