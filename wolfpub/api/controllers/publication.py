@@ -15,15 +15,20 @@ from wolfpub.api.handlers.publication import PeriodicalHandler
 from wolfpub.api.models.serializers import PUBLICATION_ARGUMENTS
 from wolfpub.api.models.serializers import BOOK_ARGUMENTS
 from wolfpub.api.models.serializers import PERIODICAL_ARGUMENTS
+from wolfpub.api.models.serializers import PUBLICATION_ALL_ARGUMENTS
 from wolfpub.api.models.serializers import CHAPTER_ARGUMENTS
 from wolfpub.api.models.serializers import ARTICLE_ARGUMENTS
-from wolfpub.api.models.serializers import PUBLICATION_AUTHOR_ARGUMENTS
+from wolfpub.api.models.serializers import BOOK_AUTHOR_ARGUMENTS
+from wolfpub.api.models.serializers import ARTICLE_AUTHOR_ARGUMENTS
 from wolfpub.api.models.serializers import PUBLICATION_EDITOR_ARGUMENTS
+from wolfpub.api.models.serializers import SEARCH_ARGUMENTS
 
 from wolfpub.api.restplus import api
 from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException
 from wolfpub.api.utils.custom_response import CustomResponse
 from wolfpub.api.utils.mariadb_connector import MariaDBConnector
+
+from wolfpub.constants import BOOKS, PERIODICALS
 
 ns = api.namespace('publication', description='Route admin for publication actions.')
 
@@ -60,16 +65,13 @@ class Book(Resource):
                 'creation_date': creation_date,
                 'is_available': is_available
             }
-            book_id = book_handler.get_id(publication.get('Title', None))
-            print(book_id)
+            book_id = book_handler.get_id_from_title(publication.get('title', None))
             if book_id is not None:
                 book['book_id'] = book_id
                 edition = book_handler.get_edition(book_id)
-                book['edition'] = edition
+                book['edition'] = int(edition) + 1
             else:
                 book['book_id'] = book_handler.new_book_id()
-            print(publication)
-            print(book)
             publication_id = publication_handler.set(publication)
             book.update(publication_id)
             book_handler.set(book)
@@ -108,17 +110,14 @@ class Periodical(Resource):
             periodical = {
                 'issn': issn,
                 'issue': issue,
-                'publication_type': periodical_type,
+                'periodical_type': periodical_type,
                 'is_available': is_available
             }
-            periodical_id = periodical_handler.get_id(publication.get('Title', None))
-            print(periodical_id)
+            periodical_id = periodical_handler.get_id_from_title(publication.get('title', None))
             if periodical_id is not None:
                 periodical['periodical_id'] = periodical_id
             else:
                 periodical['periodical_id'] = periodical_handler.new_periodical_id()
-            print(publication)
-            print(periodical)
             publication_id = publication_handler.set(publication)
             periodical.update(publication_id)
             periodical_handler.set(periodical)
@@ -161,17 +160,39 @@ class Publication(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
-    @ns.expect(PUBLICATION_ARGUMENTS, BOOK_ARGUMENTS, PERIODICAL_ARGUMENTS, validate=False, required=False)
+    @ns.doc(PUBLICATION_ALL_ARGUMENTS, validate=False, required=False)
     def put(self, publication_id):
         """
         End-point to update the publication
         """
         try:
             publication = json.loads(request.data)
-            row_affected = publication_handler.update(publication_id, publication)
-            if row_affected < 1:
-                return CustomResponse(data={}, message=f"No updates made for publication with id '{publication}'",
+            book = {}
+            periodical = {}
+            for key in list(publication.keys()):
+                if key in BOOKS['columns'].keys():
+                    book[key] = publication.pop(key)
+                if key in PERIODICALS['columns'].keys():
+                    periodical[key] = publication.pop(key)
+
+            record_updated = False
+            if len(publication) != 0:
+                row_affected = publication_handler.update(publication_id, publication)
+                if row_affected >= 1:
+                    record_updated = True
+            if len(book) != 0:
+                row_affected = book_handler.update(publication_id, book)
+                if row_affected >= 1:
+                    record_updated = True
+            if len(periodical) != 0:
+                row_affected = periodical_handler.update(publication_id, periodical)
+                if row_affected >= 1:
+                    record_updated = True
+
+            if not record_updated:
+                return CustomResponse(data={}, message=f"No updates made for publication with id '{publication_id}'",
                                       status_code=404)
+
             return CustomResponse(data={}, message="Publication details updated")
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -236,7 +257,7 @@ class Chapter(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
-    @ns.expect(CHAPTER_ARGUMENTS, validate=False, required=False)
+    @ns.doc(CHAPTER_ARGUMENTS, validate=False, required=False)
     def put(self, publication_id, chapter_id):
         """
         End-point to update the chapter
@@ -273,13 +294,14 @@ class Article(Resource):
     """
 
     @ns.expect(ARTICLE_ARGUMENTS, validate=True)
-    def post(self):
+    def post(self, publication_id):
         """
         End-point to create new article
         """
         try:
             article = json.loads(request.data)
-            article_id = publication_handler.set(article)
+            article['publication_id'] = publication_id
+            article_id = periodical_handler.set_article(article)
             return CustomResponse(data=article_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -305,7 +327,7 @@ class Article(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
-    @ns.expect(ARTICLE_ARGUMENTS, validate=False, required=False)
+    @ns.doc(ARTICLE_ARGUMENTS, validate=False, required=False)
     def put(self, publication_id, article_id):
         """
         End-point to update the article
@@ -337,27 +359,68 @@ class Article(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+@ns.route("/<string:publication_id>/article/<string:article_id>/author")
+class Article(Resource):
+    """
+    Focuses on article associations in WolfPubDB.
+    """
+
+    @ns.expect(ARTICLE_AUTHOR_ARGUMENTS, validate=True)
+    def post(self, publication_id, article_id):
+        """
+        End-point to associate authors with an article
+        """
+        try:
+            output = periodical_handler.get_article(publication_id, article_id)
+            if len(output) == 0:
+                return CustomResponse(data={}, message=f"Article with id '{article_id}' for publication with id '{publication_id}' not found",
+                                      status_code=404)
+
+            authors = json.loads(request.data).pop("author", None)
+            if authors is None or len(authors) == 0:
+                raise ValueError('Must provide author IDs to associate with article')
+            if len(authors) > 5:
+                raise ValueError('Can associate only 5 authors with an article at a time')
+
+            authors_associated = 0
+            for author in authors:
+                association = {
+                    'emp_id': author,
+                    'publication_id': publication_id,
+                    'article_id': article_id
+                }
+                periodical_handler.set_author(association)
+                authors_associated += 1
+            return CustomResponse(data={},
+                                  message=f"'{authors_associated} authors added to article with id '{article_id}' for "
+                                          f"publication with id '{publication_id}")
+
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
 @ns.route("/<string:publication_id>/author")
 class Publication(Resource):
     """
     Focuses on publication associations in WolfPubDB.
     """
 
-    @ns.expect(PUBLICATION_AUTHOR_ARGUMENTS, validate=True)
+    @ns.expect(BOOK_AUTHOR_ARGUMENTS, validate=True)
     def post(self, publication_id):
         """
-        End-point to associate authors with a publication
+        End-point to associate authors with a book
         """
         try:
-            output = publication_handler.get_by_id(publication_id)
-            if len(output) == 0:
+            book_output = book_handler.get(publication_id)
+            if len(book_output) <= 0:
                 return CustomResponse(data={}, message=f"Publication with id '{publication_id}' not found",
                                       status_code=404)
+
             authors = json.loads(request.data).pop("author", None)
             if authors is None or len(authors) == 0:
-                raise ValueError('Must provide author IDs to associate with publication')
+                raise ValueError('Must provide author IDs to associate with a book')
             if len(authors) > 5:
-                raise ValueError('Can associate only 5 authors with a publication at a time')
+                raise ValueError('Can associate only 5 authors with a book at a time')
 
             authors_associated = 0
             for author in authors:
@@ -365,7 +428,7 @@ class Publication(Resource):
                     'emp_id': author,
                     'publication_id': publication_id
                 }
-                publication_handler.set_author(association)
+                book_handler.set_author(association)
                 authors_associated += 1
             return CustomResponse(data={}, message=f"'{authors_associated} authors added to publication with id '{publication_id}")
 
@@ -420,7 +483,7 @@ class Publication(Resource):
         End-point to remove an author from a publication
         """
         try:
-            row_affected = publication_handler.remove_author(publication_id, employee_id)
+            row_affected = book_handler.remove_author(publication_id, employee_id)
             if row_affected < 1:
                 return CustomResponse(data={},
                                       message=f"Author with id '{employee_id}' for publication with id '{publication_id}' not found",
@@ -454,3 +517,45 @@ class Publication(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
+
+@ns.route("/search")
+class Search(Resource):
+    """
+    Focuses on publication filters in WolfPubDB.
+    """
+
+    @ns.expect(SEARCH_ARGUMENTS, validate=True)
+    def get(self):
+        """
+        End-point to get the existing publication details
+        """
+        try:
+            filter_data = json.loads(request.data)
+            filter_attribute = filter_data["filter"]
+            filter_criteria = filter_data["meta"]
+            filter_condition = {
+                "topic": filter_criteria.get("topic", None),
+                "publication_date": filter_criteria.get("date_range", None),
+                "name": filter_criteria.get("author", None)
+            }
+            condition = {k: v for k, v in filter_condition.items() if v is not None}
+            filter_condition.clear()
+            filter_condition.update(condition)
+
+            if len(filter_condition.keys()) == 0 or filter_attribute not in ["book", "article"]:
+                raise ValueError("Invalid filter criteria provided")
+            elif filter_attribute == "book":
+                books = book_handler.get_filter_result(filter_condition, ['*'])
+                if len(books) == 0:
+                    return CustomResponse(data={}, message=f"No books found for this filter criteria",
+                                      status_code=404)
+                return CustomResponse(data=books)
+            elif filter_attribute == "article":
+                articles = periodical_handler.get_filter_result(filter_condition, ['*'])
+                if len(articles) == 0:
+                    return CustomResponse(data={}, message=f"No articles found for this filter criteria",
+                                          status_code=404)
+                return CustomResponse(data=articles)
+
+        except (QueryGenerationException, MariaDBException, ValueError) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)

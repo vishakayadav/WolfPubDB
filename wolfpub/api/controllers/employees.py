@@ -42,12 +42,17 @@ class Employees(Resource):
         try:
             employee = json.loads(request.data)
             cw_type = request.args.get('employee', None)
-            employee['cw_type'] = cw_type
-            cw = {
-                'type': employee.get('emp_type', 'Staff')
-            }
             if cw_type not in ['author', 'editor']:
                 raise ValueError('Employee must either be an author or an editor')
+            employee['cw_type'] = cw_type
+            cw = {
+                'type': employee.get('emp_type', 'Staff'),
+                'payment_frequency': employee.get('payment_frequency', 'Monthly')
+            }
+            if cw['type'] not in ['Staff', 'Guest']:
+                raise ValueError('Employee must either be staff or guest')
+            if cw['type'] == 'Guest':
+                cw['payment_frequency'] = 'Once'
             emp_id = employees_handler.set(employee)
             cw.update(emp_id)
             if cw_type == "author":
@@ -78,7 +83,7 @@ class Employees(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
-    @ns.expect(EMPLOYEE_ARGUMENTS, validate=False, required=False)
+    @ns.doc(EMPLOYEE_ARGUMENTS, validate=False, required=False)
     def put(self, emp_id):
         """
         End-point to update the employee
@@ -202,7 +207,7 @@ class Payment(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
-    @ns.expect(SALARY_PAYMENT_ARGUMENTS, validate=False, required=False)
+    @ns.doc(SALARY_PAYMENT_ARGUMENTS, validate=False, required=False)
     def put(self, transaction_id):
         """
         End-point to update payment details

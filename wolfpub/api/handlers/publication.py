@@ -6,7 +6,7 @@ import random
 from wolfpub.api.utils.custom_exceptions import MariaDBException
 from wolfpub.api.utils.query_generator import QueryGenerator
 from wolfpub.constants import PUBLICATIONS, BOOKS, PERIODICALS, CHAPTERS, ARTICLES, \
-    WRITE_PUBLICATION, REVIEW_PUBLICATION
+    WRITE_BOOKS, REVIEW_PUBLICATION, EMPLOYEES, WRITE_ARTICLES
 
 
 class PublicationHandler(object):
@@ -17,10 +17,10 @@ class PublicationHandler(object):
     def __init__(self, db):
         self.db = db
         self.table_name = PUBLICATIONS['table_name']
-        self.author_table_name = WRITE_PUBLICATION['table_name']
         self.editor_table_name = REVIEW_PUBLICATION['table_name']
+
         self.primary_key = 'publication_id'
-        self.secondary_key = []
+        self.secondary_key = set()
         self.columns = PUBLICATIONS['columns'].keys()
         self.query_gen = QueryGenerator()
 
@@ -53,7 +53,7 @@ class PublicationHandler(object):
     def set(self, publication: dict):
         insert_query = self.query_gen.insert(self.table_name, [publication])
         _, last_row_id = self.db.execute([insert_query])
-        return {'publication_id': last_row_id}
+        return {'publication_id': last_row_id[-1]}
 
     def update(self, publication_id: str, update_data: dict):
         cond = {'publication_id': publication_id}
@@ -67,20 +67,9 @@ class PublicationHandler(object):
         row_affected, _ = self.db.execute([delete_query])
         return row_affected
 
-    def set_author(self, association):
-        insert_query = self.query_gen.insert(self.author_table_name, [association])
-        row_affected, _ = self.db.execute([insert_query])
-        return row_affected
-
     def set_editor(self, association):
         insert_query = self.query_gen.insert(self.editor_table_name, [association])
         row_affected, _ = self.db.execute([insert_query])
-        return row_affected
-
-    def remove_author(self, publication_id: str, employee_id: str):
-        cond = {'publication_id': publication_id, 'emp_id': employee_id}
-        delete_query = self.query_gen.delete(self.author_table_name, cond)
-        row_affected, _ = self.db.execute([delete_query])
         return row_affected
 
     def remove_editor(self, publication_id: str, employee_id: str):
@@ -100,13 +89,17 @@ class BookHandler(PublicationHandler):
         self.table_name = BOOKS['table_name']
         self.parent_table_name = PUBLICATIONS['table_name']
         self.chapter_table_name = CHAPTERS['table_name']
-        self.secondary_key = ['book_id', 'edition']
+        self.secondary_key = set()
+        self.secondary_key.update(['book_id', 'edition'])
         self.columns = list(PUBLICATIONS['columns'].keys()) + list(BOOKS['columns'].keys())
+        self.book_filter_table_name = f"{PUBLICATIONS['table_name']} natural join " \
+                                 f"{WRITE_BOOKS['table_name']} natural join " \
+                                 f"{EMPLOYEES['table_name']}"
+        self.book_author_table_name = WRITE_BOOKS['table_name']
 
     def get(self, publication_id: str):
         cond = {'publication_id': publication_id, 'is_available': 1}
         select_query = self.query_gen.select(self.table_name, ['*'], cond)
-        print(select_query)
         return self.db.get_result(select_query)
 
     def set(self, book: dict):
@@ -135,7 +128,6 @@ class BookHandler(PublicationHandler):
     def get_chapter(self, publication_id, chapter_id):
         cond = {'publication_id': publication_id, 'chapter_id': chapter_id}
         select_query = self.query_gen.select(self.chapter_table_name, ['*'], cond)
-        print(select_query)
         return self.db.get_result(select_query)
 
     def update_chapter(self, publication_id, chapter_id, update_data):
@@ -156,7 +148,7 @@ class BookHandler(PublicationHandler):
         isbn = randnum[0:3] + "-" + randnum[3] + "-" + randnum[4:6] + "-" + randnum[6:12] + "-" + randnum[12]
         return isbn
 
-    def get_id(self, title):
+    def get_id_from_title(self, title):
         try:
             cond1 = {'title': title}
             select_query = self.query_gen.select(self.parent_table_name, ['*'], cond1)
@@ -170,7 +162,7 @@ class BookHandler(PublicationHandler):
             if len(response) == 0:
                 return None
             book_id = response[0]['book_id']
-            return {'book_id': book_id}
+            return book_id
         except MariaDBException as e:
             raise e
 
@@ -180,7 +172,7 @@ class BookHandler(PublicationHandler):
         response = self.db.get_result(select_query)
         if len(response) == 0:
             return 1
-        return response[0]['edition']
+        return response[0]['latest_edition']
 
     def new_book_id(self):
         select_query = self.query_gen.select(self.table_name, ['max(book_id) as book_count'], None)
@@ -188,7 +180,28 @@ class BookHandler(PublicationHandler):
         if len(response) == 0:
             return 1
         book_count = response[0]['book_count']
-        return book_count + 1
+        if book_count is None:
+            return 1
+        return int(book_count) + 1
+
+    def get_filter_result(self, condition, select_cols: list = None):
+        self.secondary_key.add(self.primary_key)
+        self.reformat(condition)
+        if select_cols is None:
+            select_cols = list(self.secondary_key)
+        select_query = self.query_gen.select(self.book_filter_table_name, select_cols, condition)
+        return self.db.get_result(select_query)
+
+    def set_author(self, association):
+        insert_query = self.query_gen.insert(self.book_author_table_name, [association])
+        row_affected, _ = self.db.execute([insert_query])
+        return row_affected
+
+    def remove_author(self, publication_id: str, employee_id: str):
+        cond = {'publication_id': publication_id, 'emp_id': employee_id}
+        delete_query = self.query_gen.delete(self.book_author_table_name, cond)
+        row_affected, _ = self.db.execute([delete_query])
+        return row_affected
 
 
 class PeriodicalHandler(PublicationHandler):
@@ -201,8 +214,13 @@ class PeriodicalHandler(PublicationHandler):
         self.table_name = PERIODICALS['table_name']
         self.parent_table_name = PUBLICATIONS['table_name']
         self.article_table_name = ARTICLES['table_name']
-        self.secondary_key = ['periodical_id', 'issue']
+        self.secondary_key = set()
+        self.secondary_key.update(['periodical_id', 'issue'])
         self.columns = list(PUBLICATIONS['columns'].keys()) + list(PERIODICALS['columns'].keys())
+        self.article_filter_table_name = f"{PUBLICATIONS['table_name']} natural join " \
+                                      f"{WRITE_BOOKS['table_name']} natural join " \
+                                      f"{EMPLOYEES['table_name']}"
+        self.article_author_table_name = WRITE_ARTICLES['table_name']
 
     def get(self, publication_id: str):
         cond = {'publication_id': publication_id, 'is_available': 1}
@@ -230,7 +248,7 @@ class PeriodicalHandler(PublicationHandler):
     def set_article(self, article: dict):
         insert_query = self.query_gen.insert(self.article_table_name, [article])
         _, last_row_id = self.db.execute([insert_query])
-        return {'article_id': last_row_id}
+        return {'article_id': last_row_id[-1]}
 
     def get_article(self, publication_id, article_id):
         cond = {'publication_id': publication_id, 'article_id': article_id}
@@ -255,7 +273,7 @@ class PeriodicalHandler(PublicationHandler):
         issn = randnum[0:4] + "-" + randnum[4:8]
         return issn
 
-    def get_id(self, title):
+    def get_id_from_title(self, title):
         try:
             cond1 = {'title': title}
             select_query = self.query_gen.select(self.parent_table_name, ['*'], cond1)
@@ -269,7 +287,7 @@ class PeriodicalHandler(PublicationHandler):
             if len(response) == 0:
                 return None
             periodical_id = response[0]['periodical_id']
-            return {'periodical_id': periodical_id}
+            return periodical_id
         except MariaDBException as e:
             raise e
 
@@ -279,4 +297,26 @@ class PeriodicalHandler(PublicationHandler):
         if len(response) == 0:
             return 1
         periodical_count = response[0]['periodical_count']
-        return periodical_count + 1
+        if periodical_count is None:
+            return 1
+        return int(periodical_count) + 1
+
+    def get_filter_result(self, condition, select_cols: list = None):
+        self.secondary_key.add(self.primary_key)
+        self.reformat(condition)
+        if select_cols is None:
+            select_cols = list(self.secondary_key)
+        select_query = self.query_gen.select(self.article_filter_table_name, select_cols, condition)
+        return self.db.get_result(select_query)
+
+    def set_author(self, association):
+        insert_query = self.query_gen.insert(self.article_author_table_name, [association])
+        row_affected, _ = self.db.execute([insert_query])
+        return row_affected
+
+    def remove_author(self, publication_id: str, employee_id: str):
+        cond = {'publication_id': publication_id, 'emp_id': employee_id}
+        delete_query = self.query_gen.delete(self.article_author_table_name, cond)
+        row_affected, _ = self.db.execute([delete_query])
+        return row_affected
+
