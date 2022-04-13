@@ -16,7 +16,6 @@ class AuthorsHandler(object):
         self.table_name = AUTHORS['table_name']
         self.query_gen = QueryGenerator()
 
-    # TODO: Edit
     def set(self, employee: dict):
         insert_query = self.query_gen.insert(self.table_name, [employee])
         _, last_row_id = self.db.execute([insert_query])

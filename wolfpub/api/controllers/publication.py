@@ -11,6 +11,7 @@ from datetime import date, datetime
 from wolfpub.api.handlers.publication import PublicationHandler
 from wolfpub.api.handlers.publication import BookHandler
 from wolfpub.api.handlers.publication import PeriodicalHandler
+from wolfpub.api.handlers.authors import AuthorsHandler
 
 from wolfpub.api.models.serializers import PUBLICATION_ARGUMENTS
 from wolfpub.api.models.serializers import BOOK_ARGUMENTS
@@ -36,6 +37,7 @@ mariadb = MariaDBConnector()
 publication_handler = PublicationHandler(mariadb)
 book_handler = BookHandler(mariadb)
 periodical_handler = PeriodicalHandler(mariadb)
+authors_handler = AuthorsHandler(mariadb)
 
 
 @ns.route("/book")
@@ -65,7 +67,7 @@ class Book(Resource):
                 'creation_date': creation_date,
                 'is_available': is_available
             }
-            book_id = book_handler.get_id_from_title(publication.get('title', None))
+            book_id = book_handler.get_id_from_title(publication.get('title', None).lower())
             if book_id is not None:
                 book['book_id'] = book_id
                 edition = book_handler.get_edition(book_id)
@@ -98,13 +100,13 @@ class Periodical(Resource):
             issn = publication.pop('issn', None)
             if issn is None:
                 issn = periodical_handler.generate_random_issn()
-            issue = publication.pop('issue')
-            periodical_type = publication.pop('periodical_type')
-            if periodical_type == "Magazine" and not issue.startswith('Week'):
+            issue = publication.pop('issue').lower()
+            periodical_type = publication.pop('periodical_type').lower()
+            if periodical_type == "magazine" and not issue.startswith('week'):
                 raise ValueError("Magazines must be published weekly. Expected input format - `Week<num>`")
-            elif periodical_type == "Journal" and not issue.startswith('Month'):
+            elif periodical_type == "journal" and not issue.startswith('month'):
                 raise ValueError("Journals must be published monthly. Expected input format - `Month<num>`")
-            elif periodical_type not in ["Magazine", "Journal"]:
+            elif periodical_type not in ["magazine", "journal"]:
                 raise ValueError("Periodicals must either be a magazine or a journal")
             is_available = int(publication.pop('is_available', 1))
             periodical = {
@@ -113,7 +115,7 @@ class Periodical(Resource):
                 'periodical_type': periodical_type,
                 'is_available': is_available
             }
-            periodical_id = periodical_handler.get_id_from_title(publication.get('title', None))
+            periodical_id = periodical_handler.get_id_from_title(publication.get('title', None).lower())
             if periodical_id is not None:
                 periodical['periodical_id'] = periodical_id
             else:
@@ -225,12 +227,13 @@ class Chapter(Resource):
     """
 
     @ns.expect(CHAPTER_ARGUMENTS, validate=True)
-    def post(self):
+    def post(self, publication_id):
         """
         End-point to create new chapter
         """
         try:
             chapter = json.loads(request.data)
+            chapter['publication_id'] = publication_id
             chapter_id = book_handler.set_chapter(chapter)
             return CustomResponse(data=chapter_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
@@ -383,9 +386,17 @@ class Article(Resource):
                 raise ValueError('Can associate only 5 authors with an article at a time')
 
             authors_associated = 0
-            for author in authors:
+            for emp_id in authors:
+                output = authors_handler.get(emp_id.lower())
+                if len(output) == 0:
+                    return CustomResponse(data={}, message=f"Employee with id '{emp_id}' is not an author",
+                                          status_code=404)
+                author_type = output[0].get('author_type', None)
+                if author_type == "writer":
+                    continue
+
                 association = {
-                    'emp_id': author,
+                    'emp_id': emp_id.lower(),
                     'publication_id': publication_id,
                     'article_id': article_id
                 }
@@ -413,7 +424,7 @@ class Publication(Resource):
         try:
             book_output = book_handler.get(publication_id)
             if len(book_output) <= 0:
-                return CustomResponse(data={}, message=f"Publication with id '{publication_id}' not found",
+                return CustomResponse(data={}, message=f"Book with id '{publication_id}' not found",
                                       status_code=404)
 
             authors = json.loads(request.data).pop("author", None)
@@ -423,9 +434,17 @@ class Publication(Resource):
                 raise ValueError('Can associate only 5 authors with a book at a time')
 
             authors_associated = 0
-            for author in authors:
+            for emp_id in authors:
+                output = authors_handler.get(emp_id.lower())
+                if len(output) == 0:
+                    return CustomResponse(data={}, message=f"Employee with id '{emp_id}' is not an author",
+                                          status_code=404)
+                author_type = output[0].get('author_type', None)
+                if author_type == "journalist":
+                    continue
+
                 association = {
-                    'emp_id': author,
+                    'emp_id': emp_id.lower(),
                     'publication_id': publication_id
                 }
                 book_handler.set_author(association)
@@ -461,7 +480,7 @@ class Publication(Resource):
             editors_associated = 0
             for editor in editors:
                 association = {
-                    'emp_id': editor,
+                    'emp_id': editor.lower(),
                     'publication_id': publication_id
                 }
                 publication_handler.set_editor(association)
@@ -531,14 +550,14 @@ class Search(Resource):
         """
         try:
             filter_data = json.loads(request.data)
-            filter_attribute = filter_data["filter"]
+            filter_attribute = filter_data["filter"].lower()
             filter_criteria = filter_data["meta"]
             filter_condition = {
                 "topic": filter_criteria.get("topic", None),
                 "publication_date": filter_criteria.get("date_range", None),
                 "name": filter_criteria.get("author", None)
             }
-            condition = {k: v for k, v in filter_condition.items() if v is not None}
+            condition = {k: v.lower() for k, v in filter_condition.items() if v is not None}
             filter_condition.clear()
             filter_condition.update(condition)
 

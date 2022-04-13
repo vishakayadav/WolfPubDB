@@ -123,7 +123,7 @@ class BookHandler(PublicationHandler):
     def set_chapter(self, chapter: dict):
         insert_query = self.query_gen.insert(self.chapter_table_name, [chapter])
         _, last_row_id = self.db.execute([insert_query])
-        return {'chapter_id': last_row_id}
+        return {'chapter_id': last_row_id[-1]}
 
     def get_chapter(self, publication_id, chapter_id):
         cond = {'publication_id': publication_id, 'chapter_id': chapter_id}
@@ -150,7 +150,7 @@ class BookHandler(PublicationHandler):
 
     def get_id_from_title(self, title):
         try:
-            cond1 = {'title': title}
+            cond1 = {'title': title.lower()}
             select_query = self.query_gen.select(self.parent_table_name, ['*'], cond1)
             response = self.db.get_result(select_query)
             if len(response) == 0:
@@ -275,7 +275,7 @@ class PeriodicalHandler(PublicationHandler):
 
     def get_id_from_title(self, title):
         try:
-            cond1 = {'title': title}
+            cond1 = {'title': title.lower()}
             select_query = self.query_gen.select(self.parent_table_name, ['*'], cond1)
             response = self.db.get_result(select_query)
             if len(response) == 0:

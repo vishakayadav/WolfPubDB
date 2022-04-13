@@ -13,7 +13,8 @@ from wolfpub.api.handlers.authors import AuthorsHandler
 from wolfpub.api.handlers.editors import EditorsHandler
 from wolfpub.api.handlers.salary import PaymentHandler
 
-from wolfpub.api.models.serializers import EMPLOYEE_ARGUMENTS, SALARY_PAYMENT_ARGUMENTS
+from wolfpub.api.models.serializers import EMPLOYEE_ARGUMENTS, SALARY_PAYMENT_ARGUMENTS, \
+    AUTHOR_ARGUMENTS, EDITOR_ARGUMENTS
 from wolfpub.api.restplus import api
 from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException, UnauthorizedOperation
 from wolfpub.api.utils.custom_response import CustomResponse
@@ -41,24 +42,29 @@ class Employees(Resource):
         """
         try:
             employee = json.loads(request.data)
-            cw_type = request.args.get('employee', None)
+            emp_type = employee.get('job_type', 'staff author').lower()
+            status = emp_type.split(' ')[0]
+            cw_type = emp_type.split(' ')[1]
             if cw_type not in ['author', 'editor']:
                 raise ValueError('Employee must either be an author or an editor')
-            employee['cw_type'] = cw_type
-            cw = {
-                'type': employee.get('emp_type', 'Staff'),
-                'payment_frequency': employee.get('payment_frequency', 'Monthly')
-            }
-            if cw['type'] not in ['Staff', 'Guest']:
+            if status not in ['staff', 'guest']:
                 raise ValueError('Employee must either be staff or guest')
-            if cw['type'] == 'Guest':
-                cw['payment_frequency'] = 'Once'
-            emp_id = employees_handler.set(employee)
-            cw.update(emp_id)
-            if cw_type == "author":
-                authors_handler.set(cw)
-            else:
-                editors_handler.set(cw)
+
+            employee['cw_type'] = cw_type
+            employee['status'] = status
+            cw = {
+                'type': status,
+                'payment_frequency': employee.pop('payment_frequency', 'monthly').lower(),
+            }
+            if cw['type'] == 'guest':
+                cw['payment_frequency'] = 'once'
+
+            author_type = employee.pop('author_type', 'writer')
+            if author_type not in ['writer', 'journalist']:
+                raise ValueError('Author must either be an writer or an journalist')
+            cw['author_type'] = author_type
+
+            emp_id = employees_handler.set(employee, cw)
             return CustomResponse(data=emp_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -76,10 +82,10 @@ class Employees(Resource):
         """
         try:
             output = employees_handler.get(emp_id)
-            if len(output) > 0:
-                return CustomResponse(data=output[0])
-            return CustomResponse(data={}, message=f"Employee with id '{emp_id}' not found",
+            if len(output) == 0:
+                return CustomResponse(data={}, message=f"Employee with id '{emp_id}' not found",
                                   status_code=404)
+            return CustomResponse(data=output[0])
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
@@ -90,19 +96,10 @@ class Employees(Resource):
         """
         try:
             employee = json.loads(request.data)
-            emp_type = employee.pop('emp_type', None)
             row_affected = employees_handler.update(emp_id, employee)
             if row_affected < 1:
                 return CustomResponse(data={}, message=f"No updates made for employee with id '{emp_id}'",
                                       status_code=404)
-            employee = {}
-            if emp_type:
-                employee['type'] = emp_type
-                row_affected = authors_handler.update(emp_id, employee)
-                if row_affected < 1:
-                    return CustomResponse(data={},
-                                          message=f"Employee type could not be updated for employee with id '{emp_id}'",
-                                          status_code=206)
             return CustomResponse(data={}, message="Employee details updated")
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -139,7 +136,12 @@ class Employees(Resource):
                                   status_code=404)
             publications = None
             if emp_id[0].lower() == 'a':
-                publications = employees_handler.get_author_publications(emp_id)
+                output = authors_handler.get(emp_id)
+                if len(output) == 0:
+                    return CustomResponse(data={}, message=f"Employee with id '{emp_id}' is not an author",
+                                          status_code=404)
+                author_type = output[0].get('author_type', None)
+                publications = employees_handler.get_author_publications(emp_id, author_type)
             elif emp_id[0].lower() == 'e':
                 publications = employees_handler.get_editor_publications(emp_id)
             return CustomResponse(data=publications)

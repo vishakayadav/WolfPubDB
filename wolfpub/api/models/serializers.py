@@ -74,17 +74,23 @@ PAYMENT_ARGUMENTS = api.model("Payment_Model", {
 })
 
 EMPLOYEE_ARGUMENTS = api.model("Employee_Model", {
+    "personnel_id": fields.String(min_length=1, max_length=200, required=True),
     "ssn": fields.String(min_length=1, max_length=12, pattern='\\d{3}-\\d{2}-\\d{4}', required=True),
     "name": fields.String(min_length=1, max_length=200, required=True),
     "gender": fields.String(min_length=1, max_length=1, required=False),
     "age": fields.Integer(required=False, default=1),
     "phone_number": fields.String(min_length=10, max_length=10, pattern='\\d{10}', required=True),
-    "job_title": fields.String(min_length=1, max_length=50, required=True)
+    "job_type": fields.String(min_length=1, max_length=50, required=True),
+    "email_id": fields.String(max_length=100, required=False,
+                              pattern='^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$'),
+    "address": fields.String(min_length=1, max_length=100, required=True)
 })
 
 AUTHOR_ARGUMENTS = api.model("Author_Model", {
     "emp_id": fields.String(min_length=1, max_length=6, required=True),
-    "type": fields.String(min_length=1, max_length=10, required=True, default="staff")
+    "type": fields.String(min_length=1, max_length=10, default="staff"),
+    "payment_frequency": fields.String(min_length=1, max_length=10, default="monthly"),
+    "author_type": fields.String(min_length=1, max_length=15, default="writer")
 })
 
 EDITOR_ARGUMENTS = api.model("Editor_Model", {
@@ -128,7 +134,7 @@ PUBLICATION_ALL_ARGUMENTS = api.model("Overall_Publication_Model", {
 })
 
 CHAPTER_ARGUMENTS = api.model("Chapter_Model", {
-    "publication_id": fields.String(min_length=1, max_length=6, required=True),
+    # "publication_id": fields.String(min_length=1, max_length=6, required=True),
     # "chapter_id": fields.String(min_length=1, max_length=6, required=True),
     "chapter_title": fields.String(min_length=1, max_length=200, required=True),
     "chapter_text": fields.String(min_length=1, max_length=2000, required=True)
@@ -145,7 +151,6 @@ ARTICLE_ARGUMENTS = api.model("Article_Model", {
 })
 
 SALARY_PAYMENT_ARGUMENTS = api.model("Salary_Payment_Model", {
-    # "transaction_id": fields.String(min_length=1, max_length=6, required=True),
     "emp_id": fields.String(min_length=1, max_length=6, required=True),
     "house_id": fields.String(min_length=1, max_length=6, default=1),
     "amount": fields.Float(required=True),
