@@ -56,10 +56,11 @@ class PublicationHandler(object):
         cursor = self.db.get_cursor()
         self.db.conn.autocommit = False
         try:
+            pub_type = publication.pop('pub_type', None)
             insert_query = self.query_gen.insert(self.table_name, [publication])
             _, last_row_id = self.db._execute(insert_query, cursor)
-            publication_id = last_row_id[-1]
-            pub_type = publication.pop('pub_type', None)
+            publication_id = str(last_row_id)
+
             if pub_type == "book":
                 book['publication_id'] = publication_id
                 insert_query = self.query_gen.insert(self.book_table_name, [book])
@@ -74,7 +75,7 @@ class PublicationHandler(object):
             self.db.conn.rollback()
             raise e
 
-        return {'publication_id': last_row_id[-1]}
+        return {'publication_id': publication_id}
 
     def update(self, publication_id: str, publication: dict, book: dict, periodical: dict):
         cond = {'publication_id': publication_id}
@@ -131,8 +132,7 @@ class BookHandler(PublicationHandler):
         self.secondary_key.update(['book_id', 'edition'])
         self.columns = list(PUBLICATIONS['columns'].keys()) + list(BOOKS['columns'].keys())
         self.book_filter_table_name = f"{PUBLICATIONS['table_name']} natural join " \
-                                 f"{WRITE_BOOKS['table_name']} natural join " \
-                                 f"{EMPLOYEES['table_name']}"
+                                 f"{BOOKS['table_name']}"
         self.book_author_table_name = WRITE_BOOKS['table_name']
 
     def get(self, publication_id: str):
@@ -180,6 +180,14 @@ class BookHandler(PublicationHandler):
         row_affected, _ = self.db.execute([delete_query])
         return row_affected
 
+    def get_latest_chapter(self, publication_id):
+        cond = {'publication_id': publication_id}
+        select_query = self.query_gen.select(self.table_name, ['max(chapter_id) as latest_chapter'], cond)
+        response = self.db.get_result(select_query)
+        if len(response) == 0 or response[0]['latest_chapter'] is None:
+            return 1
+        return int(response[0]['latest_chapter']) + 1
+
     @staticmethod
     def generate_random_isbn():
         randnum = str(random.randrange(10 ** 12, 10 ** 13))
@@ -194,7 +202,7 @@ class BookHandler(PublicationHandler):
             if len(response) == 0:
                 return None
             publication_id = response[0]['publication_id']
-            cond2 = {'publication_id': publication_id, 'is_available': 1}
+            cond2 = {'publication_id': publication_id}
             select_query = self.query_gen.select(self.table_name, ['*'], cond2)
             response = self.db.get_result(select_query)
             if len(response) == 0:
@@ -205,12 +213,12 @@ class BookHandler(PublicationHandler):
             raise e
 
     def get_edition(self, book_id):
-        cond = {'book_id': book_id, 'is_available': 1}
+        cond = {'book_id': book_id}
         select_query = self.query_gen.select(self.table_name, ['max(edition) as latest_edition'], cond)
         response = self.db.get_result(select_query)
-        if len(response) == 0:
+        if len(response) == 0 or response[0]['latest_edition'] is None:
             return 1
-        return response[0]['latest_edition'] + 1
+        return int(response[0]['latest_edition']) + 1
 
     def new_book_id(self):
         select_query = self.query_gen.select(self.table_name, ['max(book_id) as book_count'], None)
@@ -225,6 +233,7 @@ class BookHandler(PublicationHandler):
     def get_filter_result(self, condition, select_cols: list = None):
         self.secondary_key.add(self.primary_key)
         self.reformat(condition)
+        condition.update({'is_available': 1})
         if select_cols is None:
             select_cols = list(self.secondary_key)
         select_query = self.query_gen.select(self.book_filter_table_name, select_cols, condition)
@@ -255,9 +264,8 @@ class PeriodicalHandler(PublicationHandler):
         self.secondary_key = set()
         self.secondary_key.update(['periodical_id', 'issue'])
         self.columns = list(PUBLICATIONS['columns'].keys()) + list(PERIODICALS['columns'].keys())
-        self.article_filter_table_name = f"{PUBLICATIONS['table_name']} natural join " \
-                                      f"{WRITE_BOOKS['table_name']} natural join " \
-                                      f"{EMPLOYEES['table_name']}"
+        self.article_filter_table_name = f"{PERIODICALS['table_name']} natural join " \
+                                      f"{ARTICLES['table_name']}"
         self.article_author_table_name = WRITE_ARTICLES['table_name']
 
     def get(self, publication_id: str):
@@ -342,9 +350,11 @@ class PeriodicalHandler(PublicationHandler):
     def get_filter_result(self, condition, select_cols: list = None):
         self.secondary_key.add(self.primary_key)
         self.reformat(condition)
+        condition.update({'is_available': 1})
         if select_cols is None:
             select_cols = list(self.secondary_key)
         select_query = self.query_gen.select(self.article_filter_table_name, select_cols, condition)
+        print(select_query)
         return self.db.get_result(select_query)
 
     def set_author(self, association):
@@ -359,9 +369,9 @@ class PeriodicalHandler(PublicationHandler):
         return row_affected
 
     def get_latest_article(self, publication_id):
-        cond = {'publication_id': publication_id, 'is_available': 1}
+        cond = {'publication_id': publication_id}
         select_query = self.query_gen.select(self.table_name, ['max(article_id) as latest_article'], cond)
         response = self.db.get_result(select_query)
-        if len(response) == 0:
+        if len(response) == 0 or response[0]['latest_article'] is None:
             return 1
-        return response[0]['latest_article'] + 1
+        return int(response[0]['latest_article']) + 1

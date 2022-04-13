@@ -71,11 +71,13 @@ class Book(Resource):
             if book_id is not None:
                 book['book_id'] = book_id
                 edition = book_handler.get_edition(book_id)
-                book['edition'] = int(edition) + 1
+                book['edition'] = int(edition)
             else:
                 book['book_id'] = book_handler.new_book_id()
 
             publication['pub_type'] = "book"
+            print(publication)
+            print(book)
             publication_id = publication_handler.set(publication, book)
             return CustomResponse(data=publication_id)
         except (QueryGenerationException, MariaDBException, ValueError, KeyError) as e:
@@ -221,6 +223,8 @@ class Chapter(Resource):
         try:
             chapter = json.loads(request.data)
             chapter['publication_id'] = publication_id
+            next_chapter_id = book_handler.get_latest_chapter(publication_id)
+            chapter['chapter_id'] = int(next_chapter_id)
             chapter_id = book_handler.set_chapter(chapter)
             return CustomResponse(data=chapter_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
