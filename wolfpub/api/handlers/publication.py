@@ -264,7 +264,7 @@ class BookHandler(PublicationHandler):
             if len(response) == 0:
                 return None
             publication_id = response[0]['publication_id']
-            cond2 = {'publication_id': publication_id, 'is_available': 1}
+            cond2 = {'publication_id': publication_id}
             select_query = self.query_gen.select(self.table_name, ['*'], cond2)
             response = self.db.get_result(select_query)
             if len(response) == 0:
@@ -275,12 +275,12 @@ class BookHandler(PublicationHandler):
             raise e
 
     def get_edition(self, book_id):
-        cond = {'book_id': book_id, 'is_available': 1}
+        cond = {'book_id': book_id}
         select_query = self.query_gen.select(self.table_name, ['max(edition) as latest_edition'], cond)
         response = self.db.get_result(select_query)
-        if len(response) == 0:
+        if len(response) == 0 or response[0]['latest_edition'] is None:
             return 1
-        return response[0]['latest_edition'] + 1
+        return int(response[0]['latest_edition']) + 1
 
     def new_book_id(self):
         select_query = self.query_gen.select(self.table_name, ['max(book_id) as book_count'], None)
