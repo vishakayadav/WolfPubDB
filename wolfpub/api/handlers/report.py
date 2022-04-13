@@ -3,7 +3,7 @@ Module for Handling Distributors
 """
 
 from wolfpub.api.utils.query_generator import QueryGenerator
-from wolfpub.constants import DISTRIBUTORS, ACCOUNT_PAYMENTS, SALARY_PAYMENTS, ORDERS, ACCOUNTS
+from wolfpub.constants import DISTRIBUTORS, ACCOUNT_PAYMENTS, SALARY_PAYMENTS, ORDERS, ACCOUNTS, AUTHORS
 
 
 class ReportHandler(object):
@@ -92,18 +92,23 @@ class ReportHandler(object):
         return self.db.get_result(select_query)
 
     def get_salary_expense_per_worktype(self, start_date: str = None, end_date: str = None):
-        table = SALARY_PAYMENTS['table_name']
-        columns = ["CASE WHEN emp_id like 'a%' THEN 'authorship' ELSE 'editorial work' END AS work_type",
+        table = f"{SALARY_PAYMENTS['table_name']} as s left join {AUTHORS['table_name']} as a on a.emp_id = s.emp_id"
+        columns = ["CASE WHEN author_type = 'writer' THEN 'book authorship' "
+                   "WHEN author_type = 'journalist' THEN 'article authorship' "
+                   "ELSE 'editorial work' END AS work_type",
                    "sum(amount) as salary_expense"]
+        cond = self.date_cond('send_date', start_date, end_date)
         group_by = ['work_type']
-        select_query = self.query_gen.select(table, columns, condition={}, group_by=group_by)
+        select_query = self.query_gen.select(table, columns, condition=cond, group_by=group_by)
         return self.db.get_result(select_query)
 
     def get_salary_expense_per_month_per_worktype(self):
-        table = SALARY_PAYMENTS['table_name']
+        table = f"{SALARY_PAYMENTS['table_name']} as s left join {AUTHORS['table_name']} as a on a.emp_id = s.emp_id"
         columns = ["year(send_date) as year",
                    "month(send_date) as month",
-                   "CASE WHEN emp_id like 'a%' THEN 'authorship' ELSE 'editorial work' END AS work_type",
+                   "CASE WHEN author_type = 'writer' THEN 'book authorship' "
+                   "WHEN author_type = 'journalist' THEN 'article authorship' "
+                   "ELSE 'editorial work' END AS work_type",
                    "sum(amount) as salary_expense"]
         group_by = ['YEAR(send_date)', 'MONTH(send_date)', 'work_type']
         select_query = self.query_gen.select(table, columns, condition={}, group_by=group_by)
