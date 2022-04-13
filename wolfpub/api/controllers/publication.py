@@ -3,32 +3,29 @@ To handle the Content writers, their payments and their work
 """
 
 import json
+from datetime import datetime
 
 from flask import request
 from flask_restplus import Resource
-from datetime import date, datetime
 
-from wolfpub.api.handlers.publication import PublicationHandler
+from wolfpub.api.handlers.authors import AuthorsHandler
 from wolfpub.api.handlers.publication import BookHandler
 from wolfpub.api.handlers.publication import PeriodicalHandler
-from wolfpub.api.handlers.authors import AuthorsHandler
-
-from wolfpub.api.models.serializers import PUBLICATION_ARGUMENTS
+from wolfpub.api.handlers.publication import PublicationHandler
+from wolfpub.api.models.serializers import ARTICLE_ARGUMENTS
+from wolfpub.api.models.serializers import ARTICLE_AUTHOR_ARGUMENTS
 from wolfpub.api.models.serializers import BOOK_ARGUMENTS
+from wolfpub.api.models.serializers import BOOK_AUTHOR_ARGUMENTS
+from wolfpub.api.models.serializers import CHAPTER_ARGUMENTS
 from wolfpub.api.models.serializers import PERIODICAL_ARGUMENTS
 from wolfpub.api.models.serializers import PUBLICATION_ALL_ARGUMENTS
-from wolfpub.api.models.serializers import CHAPTER_ARGUMENTS
-from wolfpub.api.models.serializers import ARTICLE_ARGUMENTS
-from wolfpub.api.models.serializers import BOOK_AUTHOR_ARGUMENTS
-from wolfpub.api.models.serializers import ARTICLE_AUTHOR_ARGUMENTS
+from wolfpub.api.models.serializers import PUBLICATION_ARGUMENTS
 from wolfpub.api.models.serializers import PUBLICATION_EDITOR_ARGUMENTS
 from wolfpub.api.models.serializers import SEARCH_ARGUMENTS
-
 from wolfpub.api.restplus import api
 from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException
 from wolfpub.api.utils.custom_response import CustomResponse
 from wolfpub.api.utils.mariadb_connector import MariaDBConnector
-
 from wolfpub.constants import BOOKS, PERIODICALS
 
 ns = api.namespace('publication', description='Route admin for publication actions.')
@@ -58,7 +55,8 @@ class Book(Resource):
                 isbn = book_handler.generate_random_isbn()
             creation_date = publication.pop('creation_date')
             publication_date = publication.get('publication_date')
-            if datetime.strptime(creation_date, "%Y-%m-%d").date() > datetime.strptime(publication_date, "%Y-%m-%d").date():
+            if datetime.strptime(creation_date, "%Y-%m-%d").date() > datetime.strptime(publication_date,
+                                                                                       "%Y-%m-%d").date():
                 raise ValueError('Creation date has to be before publication date')
             is_available = int(publication.pop('is_available', 1))
             book = {
@@ -76,8 +74,6 @@ class Book(Resource):
                 book['book_id'] = book_handler.new_book_id()
 
             publication['pub_type'] = "book"
-            print(publication)
-            print(book)
             publication_id = publication_handler.set(publication, book)
             return CustomResponse(data=publication_id)
         except (QueryGenerationException, MariaDBException, ValueError, KeyError) as e:
@@ -260,7 +256,8 @@ class Chapter(Resource):
             chapter = json.loads(request.data)
             row_affected = book_handler.update_chapter(publication_id, chapter_id, chapter)
             if row_affected < 1:
-                return CustomResponse(data={}, message=f"No updates made for chapter with id '{chapter_id}' for publication with id '{publication_id}'",
+                return CustomResponse(data={},
+                                      message=f"No updates made for chapter with id '{chapter_id}' for publication with id '{publication_id}'",
                                       status_code=404)
             return CustomResponse(data={}, message="Chapter details updated")
         except (QueryGenerationException, MariaDBException) as e:
@@ -273,7 +270,8 @@ class Chapter(Resource):
         try:
             row_affected = book_handler.remove_chapter(publication_id, chapter_id)
             if row_affected < 1:
-                return CustomResponse(data={}, message=f"Chapter with id '{chapter_id}' for publication with id '{publication_id}' not found",
+                return CustomResponse(data={},
+                                      message=f"Chapter with id '{chapter_id}' for publication with id '{publication_id}' not found",
                                       status_code=404)
             else:
                 return CustomResponse(data={}, message="Chapter is deleted")
@@ -369,7 +367,8 @@ class Article(Resource):
         try:
             output = periodical_handler.get_article(publication_id, article_id)
             if len(output) == 0:
-                return CustomResponse(data={}, message=f"Article with id '{article_id}' for publication with id '{publication_id}' not found",
+                return CustomResponse(data={},
+                                      message=f"Article with id '{article_id}' for publication with id '{publication_id}' not found",
                                       status_code=404)
 
             authors = json.loads(request.data).pop("author", None)
@@ -467,7 +466,8 @@ class Publication(Resource):
                 }
                 book_handler.set_author(association)
                 authors_associated += 1
-            return CustomResponse(data={}, message=f"'{authors_associated} authors added to publication with id '{publication_id}")
+            return CustomResponse(data={},
+                                  message=f"'{authors_associated} authors added to publication with id '{publication_id}")
 
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -526,7 +526,8 @@ class Publication(Resource):
                 }
                 publication_handler.set_editor(association)
                 editors_associated += 1
-            return CustomResponse(data={}, message=f"'{editors_associated} editors added to publication with id '{publication_id}")
+            return CustomResponse(data={},
+                                  message=f"'{editors_associated} editors added to publication with id '{publication_id}")
 
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -585,7 +586,7 @@ class Search(Resource):
                 books = book_handler.get_filter_result(filter_condition, ['*'])
                 if len(books) == 0:
                     return CustomResponse(data={}, message=f"No books found for this filter criteria",
-                                      status_code=404)
+                                          status_code=404)
                 return CustomResponse(data=books)
             elif filter_attribute == "article":
                 articles = periodical_handler.get_filter_result(filter_condition, ['*'])

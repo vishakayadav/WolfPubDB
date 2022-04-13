@@ -6,7 +6,7 @@ import random
 from wolfpub.api.utils.custom_exceptions import MariaDBException
 from wolfpub.api.utils.query_generator import QueryGenerator
 from wolfpub.constants import PUBLICATIONS, BOOKS, PERIODICALS, CHAPTERS, ARTICLES, \
-    WRITE_BOOKS, REVIEW_PUBLICATION, EMPLOYEES, WRITE_ARTICLES
+    WRITE_BOOKS, REVIEW_PUBLICATION, WRITE_ARTICLES
 
 
 class PublicationHandler(object):
@@ -132,7 +132,7 @@ class BookHandler(PublicationHandler):
         self.secondary_key.update(['book_id', 'edition'])
         self.columns = list(set(list(PUBLICATIONS['columns'].keys()) + list(BOOKS['columns'].keys())))
         self.book_filter_table_name = f"{PUBLICATIONS['table_name']} natural join " \
-                                 f"{BOOKS['table_name']}"
+                                      f"{BOOKS['table_name']}"
         self.book_author_table_name = WRITE_BOOKS['table_name']
 
     def get(self, publication_id: str):
@@ -280,7 +280,7 @@ class BookHandler(PublicationHandler):
         response = self.db.get_result(select_query)
         if len(response) == 0:
             return 1
-        return response[0]['latest_edition']
+        return response[0]['latest_edition'] + 1
 
     def new_book_id(self):
         select_query = self.query_gen.select(self.table_name, ['max(book_id) as book_count'], None)
@@ -288,7 +288,7 @@ class BookHandler(PublicationHandler):
         if len(response) == 0:
             return 1
         book_count = response[0]['book_count']
-        return book_count+1
+        return book_count + 1
 
 
 class PeriodicalHandler(PublicationHandler):
@@ -305,7 +305,7 @@ class PeriodicalHandler(PublicationHandler):
         self.secondary_key.update(['periodical_id', 'issue'])
         self.columns = list(set(list(PUBLICATIONS['columns'].keys()) + list(PERIODICALS['columns'].keys())))
         self.article_filter_table_name = f"{PERIODICALS['table_name']} natural join " \
-                                      f"{ARTICLES['table_name']}"
+                                         f"{ARTICLES['table_name']}"
         self.article_author_table_name = WRITE_ARTICLES['table_name']
 
     def get(self, publication_id: str):
