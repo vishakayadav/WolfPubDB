@@ -176,7 +176,7 @@ class Publication(Resource):
                     periodical[key] = publication.pop(key)
 
             row_affected = publication_handler.update(publication_id, publication, book, periodical)
-            if row_affected >= 1:
+            if row_affected < 1:
                 return CustomResponse(data={}, message=f"No updates made for publication with id '{publication_id}'",
                                       status_code=404)
 

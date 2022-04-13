@@ -22,7 +22,6 @@ class PublicationHandler(object):
         self.editor_table_name = REVIEW_PUBLICATION['table_name']
 
         self.primary_key = 'publication_id'
-        self.secondary_key = set()
         self.columns = PUBLICATIONS['columns'].keys()
         self.query_gen = QueryGenerator()
 
@@ -36,15 +35,16 @@ class PublicationHandler(object):
                 if isinstance(value, list):
                     self.reformat(value)
 
-    def get_by_id(self, publication_id: str, select_cols: list = None):
-        cond = {'publication_id': publication_id}
+    def get_by_id(self, publication_ids, select_cols: list = None):
         if select_cols is None:
             select_cols = ['*']
+        if isinstance(publication_ids, list) and len(publication_ids) == 1:
+            publication_ids = publication_ids[0]
+        cond = {'publication_id': publication_ids}
         select_query = self.query_gen.select(self.table_name, select_cols, cond)
         return self.db.get_result(select_query)
 
     def get_ids(self, condition):
-        self.secondary_key.add(self.primary_key)
         self.reformat(condition)
         table = self.table_name
         if table != PUBLICATIONS['table_name']:
@@ -231,11 +231,10 @@ class BookHandler(PublicationHandler):
         return int(book_count) + 1
 
     def get_filter_result(self, condition, select_cols: list = None):
-        self.secondary_key.add(self.primary_key)
         self.reformat(condition)
         condition.update({'is_available': 1})
         if select_cols is None:
-            select_cols = list(self.secondary_key)
+            select_cols = self.primary_key
         select_query = self.query_gen.select(self.book_filter_table_name, select_cols, condition)
         return self.db.get_result(select_query)
 
@@ -388,11 +387,10 @@ class PeriodicalHandler(PublicationHandler):
         return int(periodical_count) + 1
 
     def get_filter_result(self, condition, select_cols: list = None):
-        self.secondary_key.add(self.primary_key)
         self.reformat(condition)
         condition.update({'is_available': 1})
         if select_cols is None:
-            select_cols = list(self.secondary_key)
+            select_cols = self.primary_key
         select_query = self.query_gen.select(self.article_filter_table_name, select_cols, condition)
         print(select_query)
         return self.db.get_result(select_query)
