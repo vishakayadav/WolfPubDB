@@ -28,6 +28,7 @@ SUGGEST_FILTER_ARGUMENTS = api.model("Suggest_Filter_Model", {
 })
 
 DISTRIBUTOR_ARGUMENTS = api.model("Distributor_Model", {
+    "distributor_id": fields.String(min_length=1, max_length=6, required=True),
     "name": fields.String(min_length=1, max_length=200, required=True),
     "distributor_type": fields.String(min_length=1, max_length=20, required=True),
     "address": fields.String(min_length=1, max_length=100, required=True),
@@ -36,34 +37,36 @@ DISTRIBUTOR_ARGUMENTS = api.model("Distributor_Model", {
     "contact_person": fields.String(max_length=100),
     "contact_email": fields.String(max_length=100, required=False,
                                    pattern='^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$'),
-    "periodicity": fields.String(max_length=20, required=False)
+    "periodicity": fields.String(max_length=20, default='monthly', required=False),
+    "balance": fields.Float(required=False)
 })
 
 ACCOUNT_ARGUMENTS = api.model("Account_Model", {
-    "distributor_id": fields.String(min_length=1, max_length=6, pattern='\\d+', required=True),
     "contact_email": fields.String(max_length=100, required=True,
                                    pattern='^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$'),
     "periodicity": fields.String(max_length=20, required=True)
 })
 
 BOOK_ORDER_ARGUMENTS = api.model("Book_Order_Model", {
-    "book_id": fields.String(min_length=1, max_length=6, pattern='\\d+', required=True),
+    "title": fields.String(min_length=1, max_length=100, required=True),
     "edition": fields.Date(required=True),
     "quantity": fields.Integer(required=False, default=1)
 })
 
 PERIODICAL_ORDER_ARGUMENTS = api.model("Periodical_Order_Model", {
-    "periodical_id": fields.String(min_length=1, max_length=6, pattern='\\d+', required=True),
+    "title": fields.String(min_length=1, max_length=100, required=True),
     "issue": fields.Date(required=True),
     "quantity": fields.Integer(required=False, default=1)
 })
 
 ORDER_ARGUMENTS = api.model("Order_Model", {
+    "order_id": fields.Integer(required=True),
     "delivery_date": fields.Date(required=True),
     "items": fields.Nested(api.model("Items_Model", {
         "books": fields.List(fields.Nested(BOOK_ORDER_ARGUMENTS), required=True),
         "periodicals": fields.List(fields.Nested(PERIODICAL_ORDER_ARGUMENTS), required=True)
-    }))
+    })),
+    "shipping_cost": fields.Float(required=False)
 })
 
 PAYMENT_ARGUMENTS = api.model("Payment_Model", {

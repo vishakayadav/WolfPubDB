@@ -29,6 +29,9 @@ def initialize_app(flask_app):
     from wolfpub.api.controllers.distributor import ns as distributor_ns
     api.add_namespace(distributor_ns)
 
+    from wolfpub.api.controllers.account import ns as account_ns
+    api.add_namespace(account_ns)
+
     from wolfpub.api.controllers.content_writers import ns as content_writers_ns
     api.add_namespace(content_writers_ns)
 

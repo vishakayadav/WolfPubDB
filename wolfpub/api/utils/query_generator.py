@@ -45,8 +45,10 @@ class QueryGenerator(object):
     def get_where_cond(self, cond: dict):
         where_cond = []
         for key, value in cond.items():
-            if isinstance(value, list):
-                if isinstance(value[0], str) or isinstance(value[0], int) or isinstance(value[0], float):
+            if not value:
+                where_cond.append(f'{key} IS NULL')
+            elif isinstance(value, list):
+                if value and (isinstance(value[0], str) or isinstance(value[0], int) or isinstance(value[0], float)):
                     where_cond.append(f'{key} IN {tuple(value)}')
                 else:
                     where_cond.append(f"(({') or ('.join([self.get_where_cond(v) for v in value])}))")
@@ -57,8 +59,6 @@ class QueryGenerator(object):
                     where_cond.append(self.handling_where_operator(key, value))
                 else:
                     where_cond.append(self.get_where_cond(value))
-            elif not value:
-                where_cond.append(f'{key} IS NULL')
             else:
                 error_msg = 'Value for a column not in correct format, expected format: list or string'
                 logger.error(error_msg)

@@ -5,7 +5,7 @@ from wolfpub.api.handlers.account import AccountHandler
 from wolfpub.api.utils.custom_exceptions import UnauthorizedOperation
 
 from wolfpub.api.utils.query_generator import QueryGenerator
-from wolfpub.constants import DISTRIBUTORS
+from wolfpub.constants import DISTRIBUTORS, ACCOUNTS
 
 
 class DistributorHandler(object):
@@ -18,14 +18,15 @@ class DistributorHandler(object):
         self.table_name = DISTRIBUTORS['table_name']
         self.query_gen = QueryGenerator()
 
-    def set(self, distributor: dict):
-        insert_query = self.query_gen.insert(self.table_name, [distributor])
-        _, last_row_id = self.db.execute([insert_query])
-        return {'distributor_id': last_row_id[-1]}
+    def set(self, distributor: dict, account: dict):
+        insert_query = [self.query_gen.insert(self.table_name, [distributor]),
+                        self.query_gen.insert(ACCOUNTS['table_name'], [account])]
+        _, last_row_id = self.db.execute(insert_query)
+        return {'distributor_id': last_row_id[0], 'account_id': last_row_id[1]}
 
     def get(self, distributor_id: str):
         cond = {'distributor_id': distributor_id, 'is_active': 1}
-        select_query = self.query_gen.select(self.table_name, ['*'], cond)
+        select_query = self.query_gen.select(f"{self.table_name} natural join {ACCOUNTS['table_name']}", ['*'], cond)
         dist = self.db.get_result(select_query)
         if not dist:
             raise IndexError(f"Distributor with id '{distributor_id}' Not Found")
@@ -41,7 +42,7 @@ class DistributorHandler(object):
         cond = {'distributor_id': distributor_id, 'is_active': 1}
         update_data = {'is_active': 0}
         try:
-            balance = AccountHandler(self.db).check_balance(distributor_id)
+            balance = AccountHandler(self.db).check_balance(distributor_id=distributor_id)
             if balance:
                 raise UnauthorizedOperation("Settle the Account's balance before deleting")
         except ValueError:

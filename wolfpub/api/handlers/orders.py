@@ -34,10 +34,11 @@ class OrderHandler(object):
                  'quantity': order.get('quantity', 1),
                  'price': float(order['price']) * int(order.get('quantity', 1))} for order in obj]
 
-    def get(self, order_ids, select_cols: list = None):
+    def get(self, account_id, order_ids, select_cols: list = None):
         if select_cols is None:
             select_cols = ['*']
-        select_query = self.query_gen.select(self.table_name, select_cols, {'order_id': order_ids})
+        select_query = self.query_gen.select(self.table_name, select_cols, {'account_id': account_id,
+                                                                            'order_id': order_ids})
         return self.db.get_result(select_query)
 
     def set(self, order: dict, book_orders: list[dict], periodical_orders: list[dict]):

@@ -40,7 +40,10 @@ class PublicationHandler(object):
     def get_ids(self, condition):
         self.secondary_key.append(self.primary_key)
         self.reformat(condition)
-        select_query = self.query_gen.select(self.table_name, self.secondary_key, condition)
+        table = self.table_name
+        if table != PUBLICATIONS['table_name']:
+            table = f"{table} natural join {PUBLICATIONS['table_name']}"
+        select_query = self.query_gen.select(table, ['*'], condition)
         return self.db.get_result(select_query)
 
     def set(self, publication: dict):
@@ -70,7 +73,7 @@ class BookHandler(PublicationHandler):
         super().__init__(db)
         self.table_name = BOOKS['table_name']
         self.secondary_key = ['book_id', 'edition']
-        self.columns = BOOKS['columns'].keys()
+        self.columns = list(PUBLICATIONS['columns'].keys()) + list(BOOKS['columns'].keys())
 
     def get(self, publication_id: str):
         cond = {'emp_id': publication_id}
@@ -115,7 +118,7 @@ class PeriodicalHandler(PublicationHandler):
         super().__init__(db)
         self.table_name = PERIODICALS['table_name']
         self.secondary_key = ['periodical_id', 'issue']
-        self.columns = PERIODICALS['columns'].keys()
+        self.columns = list(PUBLICATIONS['columns'].keys()) + list(PERIODICALS['columns'].keys())
 
     def get(self, publication_id: str):
         cond = {'emp_id': publication_id}
