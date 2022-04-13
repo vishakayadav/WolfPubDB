@@ -258,7 +258,7 @@ class BookHandler(PublicationHandler):
 
     def get_id_from_title(self, title):
         try:
-            cond1 = {'title': title}
+            cond1 = {'title': title.lower()}
             select_query = self.query_gen.select(self.parent_table_name, ['*'], cond1)
             response = self.db.get_result(select_query)
             if len(response) == 0:
