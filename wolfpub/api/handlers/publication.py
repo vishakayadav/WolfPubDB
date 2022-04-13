@@ -17,6 +17,8 @@ class PublicationHandler(object):
     def __init__(self, db):
         self.db = db
         self.table_name = PUBLICATIONS['table_name']
+        self.book_table_name = BOOKS['table_name']
+        self.periodical_table_name = PERIODICALS['table_name']
         self.editor_table_name = REVIEW_PUBLICATION['table_name']
 
         self.primary_key = 'publication_id'
@@ -50,16 +52,52 @@ class PublicationHandler(object):
         select_query = self.query_gen.select(table, ['*'], condition)
         return self.db.get_result(select_query)
 
-    def set(self, publication: dict):
-        insert_query = self.query_gen.insert(self.table_name, [publication])
-        _, last_row_id = self.db.execute([insert_query])
+    def set(self, publication: dict, book: dict = None, periodical: dict = None):
+        cursor = self.db.get_cursor()
+        self.db.conn.autocommit = False
+        try:
+            insert_query = self.query_gen.insert(self.table_name, [publication])
+            _, last_row_id = self.db._execute(insert_query, cursor)
+            publication_id = last_row_id[-1]
+            pub_type = publication.pop('pub_type', None)
+            if pub_type == "book":
+                book['publication_id'] = publication_id
+                insert_query = self.query_gen.insert(self.book_table_name, [book])
+                _, last_row_id = self.db._execute(insert_query, cursor)
+            elif pub_type == "periodical":
+                periodical['publication_id'] = publication_id
+                insert_query = self.query_gen.insert(self.book_table_name, [periodical])
+                _, last_row_id = self.db._execute(insert_query, cursor)
+
+            self.db.conn.commit()
+        except (MariaDBException, Exception) as e:
+            self.db.conn.rollback()
+            raise e
+
         return {'publication_id': last_row_id[-1]}
 
-    def update(self, publication_id: str, update_data: dict):
+    def update(self, publication_id: str, publication: dict, book: dict, periodical: dict):
         cond = {'publication_id': publication_id}
-        update_query = self.query_gen.update(self.table_name, cond, update_data)
-        row_affected, _ = self.db.execute([update_query])
-        return row_affected
+        cursor = self.db.get_cursor()
+        self.db.conn.autocommit = False
+        try:
+            update_query = self.query_gen.update(self.table_name, cond, publication)
+            pubs_affected, _ = self.db._execute(update_query, cursor)
+
+            if pubs_affected >= 1:
+                if len(book) != 0:
+                    update_query = self.query_gen.update(self.book_table_name, cond, book)
+                    row_affected, _ = self.db._execute(update_query, cursor)
+                elif len(periodical) != 0:
+                    update_query = self.query_gen.update(self.periodical_table_name, cond, periodical)
+                    row_affected, _ = self.db._execute(update_query, cursor)
+
+            self.db.conn.commit()
+        except (MariaDBException, Exception) as e:
+            self.db.conn.rollback()
+            raise e
+
+        return pubs_affected
 
     def remove(self, publication_id: str):
         cond = {'publication_id': publication_id}
@@ -172,7 +210,7 @@ class BookHandler(PublicationHandler):
         response = self.db.get_result(select_query)
         if len(response) == 0:
             return 1
-        return response[0]['latest_edition']
+        return response[0]['latest_edition'] + 1
 
     def new_book_id(self):
         select_query = self.query_gen.select(self.table_name, ['max(book_id) as book_count'], None)
@@ -314,9 +352,16 @@ class PeriodicalHandler(PublicationHandler):
         row_affected, _ = self.db.execute([insert_query])
         return row_affected
 
-    def remove_author(self, publication_id: str, employee_id: str):
-        cond = {'publication_id': publication_id, 'emp_id': employee_id}
+    def remove_author(self, employee_id: str, publication_id: str, article_id: str):
+        cond = {'publication_id': publication_id, 'emp_id': employee_id, article_id: article_id}
         delete_query = self.query_gen.delete(self.article_author_table_name, cond)
         row_affected, _ = self.db.execute([delete_query])
         return row_affected
 
+    def get_latest_article(self, publication_id):
+        cond = {'publication_id': publication_id, 'is_available': 1}
+        select_query = self.query_gen.select(self.table_name, ['max(article_id) as latest_article'], cond)
+        response = self.db.get_result(select_query)
+        if len(response) == 0:
+            return 1
+        return response[0]['latest_article'] + 1

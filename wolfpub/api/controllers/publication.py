@@ -74,9 +74,9 @@ class Book(Resource):
                 book['edition'] = int(edition) + 1
             else:
                 book['book_id'] = book_handler.new_book_id()
-            publication_id = publication_handler.set(publication)
-            book.update(publication_id)
-            book_handler.set(book)
+
+            publication['pub_type'] = "book"
+            publication_id = publication_handler.set(publication, book)
             return CustomResponse(data=publication_id)
         except (QueryGenerationException, MariaDBException, ValueError, KeyError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -120,9 +120,9 @@ class Periodical(Resource):
                 periodical['periodical_id'] = periodical_id
             else:
                 periodical['periodical_id'] = periodical_handler.new_periodical_id()
-            publication_id = publication_handler.set(publication)
-            periodical.update(publication_id)
-            periodical_handler.set(periodical)
+
+            publication['pub_type'] = "periodical"
+            publication_id = publication_handler.set(publication, periodical)
             return CustomResponse(data=publication_id)
         except (QueryGenerationException, MariaDBException, ValueError, KeyError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -177,21 +177,8 @@ class Publication(Resource):
                 if key in PERIODICALS['columns'].keys():
                     periodical[key] = publication.pop(key)
 
-            record_updated = False
-            if len(publication) != 0:
-                row_affected = publication_handler.update(publication_id, publication)
-                if row_affected >= 1:
-                    record_updated = True
-            if len(book) != 0:
-                row_affected = book_handler.update(publication_id, book)
-                if row_affected >= 1:
-                    record_updated = True
-            if len(periodical) != 0:
-                row_affected = periodical_handler.update(publication_id, periodical)
-                if row_affected >= 1:
-                    record_updated = True
-
-            if not record_updated:
+            row_affected = publication_handler.update(publication_id, publication, book, periodical)
+            if row_affected >= 1:
                 return CustomResponse(data={}, message=f"No updates made for publication with id '{publication_id}'",
                                       status_code=404)
 
@@ -304,6 +291,8 @@ class Article(Resource):
         try:
             article = json.loads(request.data)
             article['publication_id'] = publication_id
+            next_article_id = periodical_handler.get_latest_article(publication_id)
+            article['article_id'] = int(next_article_id)
             article_id = periodical_handler.set_article(article)
             return CustomResponse(data=article_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
@@ -410,6 +399,31 @@ class Article(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+@ns.route("/<string:publication_id>/article/<string:article_id>/author/<string:employee_id>")
+class Article(Resource):
+    """
+    Focuses on article associations in WolfPubDB.
+    """
+
+    def delete(self, employee_id, publication_id, article_id):
+        """
+        End-point to remove an author from an article
+        """
+        try:
+            row_affected = periodical_handler.remove_author(employee_id, publication_id, article_id)
+            if row_affected < 1:
+                return CustomResponse(data={},
+                                      message=f"Author with id '{employee_id}' for article with id '{article_id}' for "
+                                              f"publication with id '{publication_id}' not found",
+                                      status_code=404)
+            else:
+                return CustomResponse(data={}, message=f"Author is removed for article with id '{article_id}' "
+                                                       f"publication with id '{publication_id}'")
+
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
 @ns.route("/<string:publication_id>/author")
 class Publication(Resource):
     """
@@ -455,6 +469,29 @@ class Publication(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+@ns.route("/<string:publication_id>/author/<string:employee_id>")
+class Publication(Resource):
+    """
+    Focuses on publication associations in WolfPubDB.
+    """
+
+    def delete(self, publication_id, employee_id):
+        """
+        End-point to remove an author from a publication
+        """
+        try:
+            row_affected = book_handler.remove_author(publication_id, employee_id)
+            if row_affected < 1:
+                return CustomResponse(data={},
+                                      message=f"Author with id '{employee_id}' for publication with id '{publication_id}' not found",
+                                      status_code=404)
+            else:
+                return CustomResponse(data={}, message=f"Author is removed for publication with id '{publication_id}'")
+
+        except (QueryGenerationException, MariaDBException) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+
+
 @ns.route("/<string:publication_id>/editor")
 class Publication(Resource):
     """
@@ -486,29 +523,6 @@ class Publication(Resource):
                 publication_handler.set_editor(association)
                 editors_associated += 1
             return CustomResponse(data={}, message=f"'{editors_associated} editors added to publication with id '{publication_id}")
-
-        except (QueryGenerationException, MariaDBException) as e:
-            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
-
-
-@ns.route("/<string:publication_id>/author/<string:employee_id>")
-class Publication(Resource):
-    """
-    Focuses on publication associations in WolfPubDB.
-    """
-
-    def delete(self, publication_id, employee_id):
-        """
-        End-point to remove an author from a publication
-        """
-        try:
-            row_affected = book_handler.remove_author(publication_id, employee_id)
-            if row_affected < 1:
-                return CustomResponse(data={},
-                                      message=f"Author with id '{employee_id}' for publication with id '{publication_id}' not found",
-                                      status_code=404)
-            else:
-                return CustomResponse(data={}, message=f"Author is removed for publication with id '{publication_id}'")
 
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
