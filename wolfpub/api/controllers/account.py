@@ -45,8 +45,10 @@ class AccountOrders(Resource):
             account_handler.get(account_id)
             order = json.loads(request.data)
             order['account_id'] = account_id
-            if datetime.strptime(order['delivery_date'], "%Y-%m-%d").date() <= date.today():
-                raise ValueError('Delivery Date has to be ahead of date of placing Order')
+
+            # removed this constraint just to enable demo data insertion. TODO: Revert after Demo date
+            # if datetime.strptime(order['delivery_date'], "%Y-%m-%d").date() <= date.today():
+            #     raise ValueError('Delivery Date has to be ahead of date of placing Order')
             if 'order_date' not in order:
                 order['order_date'] = datetime.today().strftime('%Y-%m-%d')
             pub_items = order.pop('items')  # isbn, quantity
