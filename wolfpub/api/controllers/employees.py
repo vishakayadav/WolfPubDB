@@ -14,7 +14,7 @@ from wolfpub.api.handlers.editors import EditorsHandler
 from wolfpub.api.handlers.salary import PaymentHandler
 
 from wolfpub.api.models.serializers import EMPLOYEE_ARGUMENTS, SALARY_PAYMENT_ARGUMENTS, \
-    AUTHOR_ARGUMENTS, EDITOR_ARGUMENTS
+    AUTHOR_ARGUMENTS, EDITOR_ARGUMENTS, SALARY_RECEIPT_ARGUMENTS
 from wolfpub.api.restplus import api
 from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException, UnauthorizedOperation
 from wolfpub.api.utils.custom_response import CustomResponse
@@ -193,6 +193,7 @@ class Payment(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
+    @ns.expect(SALARY_RECEIPT_ARGUMENTS, validate=True)
     def post(self, transaction_id):
         """
         End-point to add claim date by payee

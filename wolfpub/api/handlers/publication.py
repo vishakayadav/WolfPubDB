@@ -6,7 +6,7 @@ import random
 from wolfpub.api.utils.custom_exceptions import MariaDBException
 from wolfpub.api.utils.query_generator import QueryGenerator
 from wolfpub.constants import PUBLICATIONS, BOOKS, PERIODICALS, CHAPTERS, ARTICLES, \
-    WRITE_BOOKS, REVIEW_PUBLICATION, WRITE_ARTICLES
+    WRITE_BOOKS, REVIEW_PUBLICATION, WRITE_ARTICLES, EMPLOYEES
 
 
 class PublicationHandler(object):
@@ -67,7 +67,8 @@ class PublicationHandler(object):
                 _, last_row_id = self.db._execute(insert_query, cursor)
             elif pub_type == "periodical":
                 periodical['publication_id'] = publication_id
-                insert_query = self.query_gen.insert(self.book_table_name, [periodical])
+                insert_query = self.query_gen.insert(self.periodical_table_name, [periodical])
+                print(insert_query)
                 _, last_row_id = self.db._execute(insert_query, cursor)
 
             self.db.conn.commit()
@@ -81,17 +82,19 @@ class PublicationHandler(object):
         cond = {'publication_id': publication_id}
         cursor = self.db.get_cursor()
         self.db.conn.autocommit = False
+        pubs_affected = 0
         try:
-            update_query = self.query_gen.update(self.table_name, cond, publication)
-            pubs_affected, _ = self.db._execute(update_query, cursor)
+            if len(publication) != 0:
+                update_query = self.query_gen.update(self.table_name, cond, publication)
+                pubs_affected, _ = self.db._execute(update_query, cursor)
 
-            if pubs_affected >= 1:
-                if len(book) != 0:
-                    update_query = self.query_gen.update(self.book_table_name, cond, book)
-                    row_affected, _ = self.db._execute(update_query, cursor)
-                elif len(periodical) != 0:
-                    update_query = self.query_gen.update(self.periodical_table_name, cond, periodical)
-                    row_affected, _ = self.db._execute(update_query, cursor)
+            if len(book) != 0:
+                update_query = self.query_gen.update(self.book_table_name, cond, book)
+                pubs_affected, _ = self.db._execute(update_query, cursor)
+
+            elif len(periodical) != 0:
+                update_query = self.query_gen.update(self.periodical_table_name, cond, periodical)
+                pubs_affected, _ = self.db._execute(update_query, cursor)
 
             self.db.conn.commit()
         except (MariaDBException, Exception) as e:
@@ -126,6 +129,7 @@ class BookHandler(PublicationHandler):
     def __init__(self, db):
         super().__init__(db)
         self.table_name = BOOKS['table_name']
+        self.employee_table_name = EMPLOYEES['table_name']
         self.parent_table_name = PUBLICATIONS['table_name']
         self.chapter_table_name = CHAPTERS['table_name']
         self.secondary_key = set()
@@ -182,7 +186,7 @@ class BookHandler(PublicationHandler):
 
     def get_latest_chapter(self, publication_id):
         cond = {'publication_id': publication_id}
-        select_query = self.query_gen.select(self.table_name, ['max(chapter_id) as latest_chapter'], cond)
+        select_query = self.query_gen.select(self.chapter_table_name, ['max(chapter_id) as latest_chapter'], cond)
         response = self.db.get_result(select_query)
         if len(response) == 0 or response[0]['latest_chapter'] is None:
             return 1
@@ -231,11 +235,27 @@ class BookHandler(PublicationHandler):
         return int(book_count) + 1
 
     def get_filter_result(self, condition, select_cols: list = None):
+        author = condition.pop("author", None)
+        if select_cols is None:
+            select_cols = ['*']
+
+        table = self.book_filter_table_name
+        if author:
+            cond = {'name': author}
+            select_query = self.query_gen.select(self.employee_table_name, select_cols, cond)
+            output = self.db.get_result(select_query)
+            if len(output) < 1:
+                return []
+            emp_id = output[0]['emp_id']
+            condition.update({'emp_id': emp_id})
+            table += " natural join " + WRITE_BOOKS['table_name']
+
         self.reformat(condition)
         condition.update({'is_available': 1})
         if select_cols is None:
             select_cols = self.primary_key
-        select_query = self.query_gen.select(self.book_filter_table_name, select_cols, condition)
+        select_query = self.query_gen.select(table, select_cols, condition)
+        print(select_query)
         return self.db.get_result(select_query)
 
     def set_author(self, association):
@@ -248,46 +268,6 @@ class BookHandler(PublicationHandler):
         delete_query = self.query_gen.delete(self.book_author_table_name, cond)
         row_affected, _ = self.db.execute([delete_query])
         return row_affected
-
-    @staticmethod
-    def generate_random_isbn():
-        randnum = str(random.randrange(10 ** 12, 10 ** 13))
-        isbn = randnum[0:3] + "-" + randnum[3] + "-" + randnum[4:6] + "-" + randnum[6:12] + "-" + randnum[12]
-        return isbn
-
-    def get_id_from_title(self, title):
-        try:
-            cond1 = {'title': title.lower()}
-            select_query = self.query_gen.select(self.parent_table_name, ['*'], cond1)
-            response = self.db.get_result(select_query)
-            if len(response) == 0:
-                return None
-            publication_id = response[0]['publication_id']
-            cond2 = {'publication_id': publication_id}
-            select_query = self.query_gen.select(self.table_name, ['*'], cond2)
-            response = self.db.get_result(select_query)
-            if len(response) == 0:
-                return None
-            book_id = response[0]['book_id']
-            return book_id
-        except MariaDBException as e:
-            raise e
-
-    def get_edition(self, book_id):
-        cond = {'book_id': book_id}
-        select_query = self.query_gen.select(self.table_name, ['max(edition) as latest_edition'], cond)
-        response = self.db.get_result(select_query)
-        if len(response) == 0 or response[0]['latest_edition'] is None:
-            return 1
-        return int(response[0]['latest_edition']) + 1
-
-    def new_book_id(self):
-        select_query = self.query_gen.select(self.table_name, ['max(book_id) as book_count'], None)
-        response = self.db.get_result(select_query)
-        if len(response) == 0:
-            return 1
-        book_count = response[0]['book_count']
-        return book_count + 1
 
 
 class PeriodicalHandler(PublicationHandler):
@@ -332,6 +312,7 @@ class PeriodicalHandler(PublicationHandler):
 
     def set_article(self, article: dict):
         insert_query = self.query_gen.insert(self.article_table_name, [article])
+        print(insert_query)
         _, last_row_id = self.db.execute([insert_query])
         return {'article_id': last_row_id[-1]}
 
@@ -408,7 +389,7 @@ class PeriodicalHandler(PublicationHandler):
 
     def get_latest_article(self, publication_id):
         cond = {'publication_id': publication_id}
-        select_query = self.query_gen.select(self.table_name, ['max(article_id) as latest_article'], cond)
+        select_query = self.query_gen.select(self.article_table_name, ['max(article_id) as latest_article'], cond)
         response = self.db.get_result(select_query)
         if len(response) == 0 or response[0]['latest_article'] is None:
             return 1

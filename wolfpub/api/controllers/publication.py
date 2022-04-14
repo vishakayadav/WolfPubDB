@@ -120,7 +120,7 @@ class Periodical(Resource):
                 periodical['periodical_id'] = periodical_handler.new_periodical_id()
 
             publication['pub_type'] = "periodical"
-            publication_id = publication_handler.set(publication, periodical)
+            publication_id = publication_handler.set(publication, None, periodical)
             return CustomResponse(data=publication_id)
         except (QueryGenerationException, MariaDBException, ValueError, KeyError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -573,8 +573,8 @@ class Search(Resource):
             filter_criteria = filter_data["meta"]
             filter_condition = {
                 "topic": filter_criteria.get("topic", None),
-                "publication_date": filter_criteria.get("date_range", None),
-                "name": filter_criteria.get("author", None)
+                "publication_date": filter_criteria.get("publication_date", None),
+                "author": filter_criteria.get("author", None)
             }
             condition = {k: v.lower() for k, v in filter_condition.items() if v is not None}
             filter_condition.clear()

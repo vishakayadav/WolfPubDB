@@ -151,6 +151,10 @@ SALARY_PAYMENT_ARGUMENTS = api.model("Salary_Payment_Model", {
     "received_date": fields.Date(required=False)
 })
 
+SALARY_RECEIPT_ARGUMENTS = api.model("Salary_Receipt_Model", {
+    "received_date": fields.Date(required=True)
+})
+
 BOOK_AUTHOR_ARGUMENTS = api.model("Write_Books_Model", {
     "author": fields.List(fields.String(min_length=1, max_length=6, required=True), required=True),
 })
