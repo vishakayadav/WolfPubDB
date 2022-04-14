@@ -79,7 +79,7 @@ class AccountOrder(Resource):
         """
         try:
             account_handler.get(account_id)
-            output = order_handler.get(account_id, order_id)
+            output = order_handler.get_order(account_id, order_id)
             if len(output) > 0:
                 return CustomResponse(data=output[0])
             return CustomResponse(data={}, message=f"Order with id '{order_id}' Not Found for given Account Id",
