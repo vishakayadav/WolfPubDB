@@ -32,7 +32,7 @@ DISTRIBUTOR_ARGUMENTS = api.model("Distributor_Model", {
     "name": fields.String(min_length=1, max_length=200, required=True),
     "distributor_type": fields.String(min_length=1, max_length=20, required=True),
     "address": fields.String(min_length=1, max_length=100, required=True),
-    "city": fields.String(min_length=1, max_length=10, required=True),
+    "city": fields.String(min_length=1, max_length=20, required=True),
     "phone_number": fields.String(min_length=10, max_length=10, pattern='\\d{10}', required=True),
     "contact_person": fields.String(max_length=100),
     "contact_email": fields.String(max_length=100, required=False,
@@ -73,27 +73,33 @@ PAYMENT_ARGUMENTS = api.model("Payment_Model", {
     "amount": fields.Float(required=True)
 })
 
-CONTENT_WRITER_ARGUMENTS = api.model("Content_Writer_Model", {
+EMPLOYEE_ARGUMENTS = api.model("Employee_Model", {
+    "personnel_id": fields.String(min_length=1, max_length=200, required=True),
     "ssn": fields.String(min_length=1, max_length=12, pattern='\\d{3}-\\d{2}-\\d{4}', required=True),
     "name": fields.String(min_length=1, max_length=200, required=True),
     "gender": fields.String(min_length=1, max_length=1, required=False),
     "age": fields.Integer(required=False, default=1),
     "phone_number": fields.String(min_length=10, max_length=10, pattern='\\d{10}', required=True),
-    "job_title": fields.String(min_length=1, max_length=50, required=True)
+    "job_type": fields.String(min_length=1, max_length=50, required=True),
+    "email_id": fields.String(max_length=100, required=False,
+                              pattern='^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$'),
+    "address": fields.String(min_length=1, max_length=100, required=True)
 })
 
 AUTHOR_ARGUMENTS = api.model("Author_Model", {
     "emp_id": fields.String(min_length=1, max_length=6, required=True),
-    "type": fields.String(min_length=1, max_length=10, required=True, default="staff")
+    "type": fields.String(min_length=1, max_length=20, default="staff"),
+    "payment_frequency": fields.String(min_length=1, max_length=20, default="monthly"),
+    "author_type": fields.String(min_length=1, max_length=20, default="writer")
 })
 
 EDITOR_ARGUMENTS = api.model("Editor_Model", {
     "emp_id": fields.String(min_length=1, max_length=6, required=True),
-    "type": fields.String(min_length=1, max_length=10, required=True, default="staff")
+    "type": fields.String(min_length=1, max_length=20, required=True, default="staff")
 })
 
 PUBLICATION_ARGUMENTS = api.model("Publication_Model", {
-    "publication_id": fields.String(min_length=1, max_length=6, required=True),
+    "publication_id": fields.String(min_length=1, max_length=6, required=False),
     "title": fields.String(min_length=1, max_length=200, required=True),
     "topic": fields.String(min_length=1, max_length=200, required=True),
     "publication_date": fields.Date(required=True),
@@ -101,39 +107,75 @@ PUBLICATION_ARGUMENTS = api.model("Publication_Model", {
 })
 
 BOOK_ARGUMENTS = api.model("Book_Model", {
-    "publication_id": fields.String(min_length=1, max_length=6, required=True),
-    "isbn": fields.String(min_length=1, max_length=13, pattern='\\d{*}-\\d{*}-\\d{*}-\\d{*}', required=True),
+    "isbn": fields.String(min_length=1, max_length=20, pattern='\\d{3}-\\d{1}-\\d{2}-\\d{6}-\\d{1}', required=False),
     "creation_date": fields.Date(required=True),
-    "edition": fields.Integer(required=True, default=1),
-    "book_id": fields.String(min_length=1, max_length=6, required=True),
     "is_available": fields.Boolean(default=True)
 })
 
 PERIODICAL_ARGUMENTS = api.model("Periodical_Model", {
-    "publication_id": fields.String(min_length=1, max_length=6, required=True),
-    "issn": fields.String(min_length=1, max_length=8, pattern='\\d{4}-\\d{4}', required=True),
-    "issue": fields.Integer(required=True, default=1),
-    "periodical_type": fields.String(min_length=1, max_length=10, required=True),
-    "periodical_id": fields.String(min_length=1, max_length=6, required=True),
+    "issn": fields.String(min_length=1, max_length=8, pattern='\\d{4}-\\d{4}', required=False),
+    "issue": fields.String(min_length=1, max_length=20, required=True),
+    "periodical_type": fields.String(min_length=1, max_length=20, required=True),
     "is_available": fields.Boolean(default=True)
 })
 
+PUBLICATION_ALL_ARGUMENTS = api.model("Overall_Publication_Model", {
+    "title": fields.String(min_length=1, max_length=200, required=True),
+    "topic": fields.String(min_length=1, max_length=200, required=True),
+    "publication_date": fields.Date(required=True),
+    "price": fields.Float(required=True),
+    "isbn": fields.String(min_length=1, max_length=20, pattern='\\d{3}-\\d{1}-\\d{2}-\\d{6}-\\d{1}', required=False),
+    "creation_date": fields.Date(required=True),
+    "issn": fields.String(min_length=1, max_length=8, pattern='\\d{4}-\\d{4}', required=False),
+    "issue": fields.String(min_length=1, max_length=20, required=True),
+    "periodical_type": fields.String(min_length=1, max_length=20, required=True),
+})
+
 CHAPTER_ARGUMENTS = api.model("Chapter_Model", {
-    "publication_id": fields.String(min_length=1, max_length=6, required=True),
-    "chapter_id": fields.String(min_length=1, max_length=6, required=True),
     "chapter_title": fields.String(min_length=1, max_length=200, required=True),
     "chapter_text": fields.String(min_length=1, max_length=2000, required=True)
 })
 
 ARTICLE_ARGUMENTS = api.model("Article_Model", {
-    "publication_id": fields.String(min_length=1, max_length=6, required=True),
-    "article_id": fields.String(min_length=1, max_length=6, required=True),
     "creation_date": fields.Date(required=True),
     "topic": fields.String(min_length=1, max_length=200, required=True),
     "title": fields.String(min_length=1, max_length=200, required=True),
-    "text": fields.String(min_length=1, max_length=2000, required=True),
-    "journalist_name": fields.String(min_length=1, max_length=200, required=True)
+    "text": fields.String(min_length=1, max_length=2000, required=True)
 })
+
+SALARY_PAYMENT_ARGUMENTS = api.model("Salary_Payment_Model", {
+    "emp_id": fields.String(min_length=1, max_length=6, required=True),
+    "house_id": fields.String(min_length=1, max_length=6, default=1),
+    "amount": fields.Float(required=True),
+    "send_date": fields.Date(required=True),
+    "received_date": fields.Date(required=False)
+})
+
+SALARY_RECEIPT_ARGUMENTS = api.model("Salary_Receipt_Model", {
+    "received_date": fields.Date(required=True)
+})
+
+BOOK_AUTHOR_ARGUMENTS = api.model("Write_Books_Model", {
+    "author": fields.List(fields.String(min_length=1, max_length=6, required=True), required=True),
+})
+
+ARTICLE_AUTHOR_ARGUMENTS = api.model("Write_Articles_Model", {
+    "author": fields.List(fields.String(min_length=1, max_length=6, required=True), required=True),
+})
+
+PUBLICATION_EDITOR_ARGUMENTS = api.model("Review_Publications_Model", {
+    "editor": fields.List(fields.String(min_length=1, max_length=6, required=True), required=True),
+})
+
+SEARCH_ARGUMENTS = api.model("Filter_Model", {
+    "filter": fields.String(min_length=1, max_length=25, required=True),
+    "meta": fields.Nested(api.model("filterCriteriaModel", {
+            "topic": fields.String(min_length=1, max_length=25, required=False),
+            "date_range": fields.Date(required=False),
+            "author": fields.String(min_length=1, max_length=25, required=False)
+        }), required=True)
+})
+
 
 REGISTER_ARGUMENT = reqparse.RequestParser()
 REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)

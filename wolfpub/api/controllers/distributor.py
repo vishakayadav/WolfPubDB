@@ -70,7 +70,7 @@ class Distributor(Resource):
         except IndexError as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=404)
 
-    @ns.expect(DISTRIBUTOR_ARGUMENTS, validate=False)
+    @ns.doc(DISTRIBUTOR_ARGUMENTS, validate=False)
     def put(self, distributor_id):
         """
         End-point to update the distributor

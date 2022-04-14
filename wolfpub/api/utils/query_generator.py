@@ -72,7 +72,7 @@ class QueryGenerator(object):
                 f"{', '.join([f'{tuple(row.values())}' for row in rows])}"
         return query
 
-    def select(self, table_name: str, columns: list, condition: dict, group_by: list = None):
+    def select(self, table_name: str, columns: list, condition: dict = None, group_by: list = None):
         query = f"""select {', '.join(columns)} from {table_name}"""
         if condition:
             where_cond = self.get_where_cond(condition)
@@ -88,7 +88,7 @@ class QueryGenerator(object):
         for key, value in update_data.items():
             if isinstance(value, dict) and any(k in self.set_operators for k in value):
                 set_values.append(self.handling_set_operator(key, value))
-            elif isinstance(value, str) or isinstance(value, int):
+            elif isinstance(value, str) or isinstance(value, int) or isinstance(value, float):
                 set_values.append(f"{key}='{value}'")
             else:
                 error_msg = 'Update Query Generator does not support list or dictionary values'

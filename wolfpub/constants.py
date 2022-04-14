@@ -25,8 +25,8 @@ ACCOUNTS = {
     }
 }
 
-CONTENT_WRITERS = {
-    'table_name': 'content_writers',
+EMPLOYEES = {
+    'table_name': 'employees',
     'columns': {
         'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
         'ssn': {'type': 'varchar(12)', 'constraint': 'not null unique'},
@@ -159,6 +159,15 @@ WRITE_BOOKS = {
     }
 }
 
+WRITE_ARTICLES = {
+    'table_name': 'write_articles',
+    'columns': {
+        'emp_id': {'type': 'varchar(6)', 'constraint': 'not null'},
+        'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'article_id': {'type': 'int(6) unsigned', 'constraint': 'not null'}
+    }
+}
+
 ORDERS = {
     'table_name': 'orders',
     'columns': {
@@ -177,7 +186,7 @@ BOOK_ORDERS_INFO = {
         'order_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
         'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
         'quantity': {'type': 'int(4) unsigned', 'constraint': 'default 1'},
-        'price': {'type': 'decimal(3, 2) unsigned', 'constraint': 'not null'}
+        'price': {'type': 'decimal(6, 2) unsigned', 'constraint': 'not null'}
     }
 }
 
@@ -187,7 +196,7 @@ PERIODICAL_ORDERS_INFO = {
         'order_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
         'publication_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
         'quantity': {'type': 'int(4) unsigned', 'constraint': 'default 1'},
-        'price': {'type': 'decimal(3, 2) unsigned', 'constraint': 'not null'}
+        'price': {'type': 'decimal(6, 2) unsigned', 'constraint': 'not null'}
     }
 }
 
@@ -220,9 +229,9 @@ ACCOUNT_PAYMENTS = {
 }
 
 REPORTS = {
-    'table_name': 'records',
+    'table_name': 'reports',
     'columns': {
-        'record_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'report_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
         'month': {'type': 'int(2)', 'constraint': 'not null'},
         'year': {'type': 'int(4)', 'constraint': 'not null'},
         'total_expense': {'type': 'decimal(8, 2)', 'constraint': 'not null'},
