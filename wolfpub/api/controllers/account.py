@@ -62,6 +62,8 @@ class AccountOrders(Resource):
             if 'shipping_cost' not in order:
                 shipping_cost = 2 * (sum([b['quantity'] for b in books]) + sum([p['quantity'] for p in periodicals]))
                 order['shipping_cost'] = 100 if shipping_cost > 100 else shipping_cost
+            if not books and not periodicals:
+                raise ValueError("Publications to be ordered not found with WolfPub Publication House")
             order_id = order_handler.set(order, books, periodicals)
             return CustomResponse(data=order_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:

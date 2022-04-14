@@ -54,6 +54,16 @@ class OrderHandler(object):
         return order[0]
 
     def set(self, order: dict, book_orders: list[dict], periodical_orders: list[dict]):
+        """
+        :param order: { 'delivery_date': '2022-05-01',
+                        'account_id': 3,
+                        'order_date': '2022-04-12',
+                        'total_price': 150.0,
+                        'shipping_cost': 10 }
+        :param book_orders: [{'order_id': 1, 'publication_id': 4, 'quantity': 1, 'price': 100}]
+        :param periodical_orders: [{'order_id': 1, 'publication_id': 5, 'quantity': 2, 'price': 25}]
+        :return: {'order_id': 1}
+        """
         insert_query = self.query_gen.insert(self.table_name, [order])
         cursor = self.db.get_cursor()
         self.db.conn.autocommit = False
