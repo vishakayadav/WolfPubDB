@@ -47,7 +47,8 @@ class AccountOrders(Resource):
             order['account_id'] = account_id
             if datetime.strptime(order['delivery_date'], "%Y-%m-%d").date() <= date.today():
                 raise ValueError('Delivery Date has to be ahead of date of placing Order')
-            order['order_date'] = datetime.today().strftime('%Y-%m-%d')
+            if 'order_date' not in order:
+                order['order_date'] = datetime.today().strftime('%Y-%m-%d')
             pub_items = order.pop('items')  # isbn, quantity
             items = copy.deepcopy(pub_items)
             books = book_handler.get_ids({'items': items['books']}) if items['books'] else []  # pub_id, isbn, price

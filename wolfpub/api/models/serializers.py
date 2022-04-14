@@ -65,7 +65,8 @@ ORDER_ARGUMENTS = api.model("Order_Model", {
         "books": fields.List(fields.Nested(BOOK_ORDER_ARGUMENTS), required=True),
         "periodicals": fields.List(fields.Nested(PERIODICAL_ORDER_ARGUMENTS), required=True)
     })),
-    "shipping_cost": fields.Float(required=False)
+    "shipping_cost": fields.Float(required=False),
+    "order_date": fields.Date(required=False)
 })
 
 PAYMENT_ARGUMENTS = api.model("Payment_Model", {
