@@ -3,20 +3,19 @@ To handle the Content writers, their payments and their work
 """
 
 import json
+from datetime import datetime
 
 from flask import request
 from flask_restplus import Resource
-from datetime import date, datetime
 
-from wolfpub.api.handlers.employees import EmployeesHandler
 from wolfpub.api.handlers.authors import AuthorsHandler
 from wolfpub.api.handlers.editors import EditorsHandler
+from wolfpub.api.handlers.employees import EmployeesHandler
 from wolfpub.api.handlers.salary import PaymentHandler
-
 from wolfpub.api.models.serializers import EMPLOYEE_ARGUMENTS, SALARY_PAYMENT_ARGUMENTS, \
-    AUTHOR_ARGUMENTS, EDITOR_ARGUMENTS, SALARY_RECEIPT_ARGUMENTS
+    SALARY_RECEIPT_ARGUMENTS
 from wolfpub.api.restplus import api
-from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException, UnauthorizedOperation
+from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException
 from wolfpub.api.utils.custom_response import CustomResponse
 from wolfpub.api.utils.mariadb_connector import MariaDBConnector
 
@@ -84,7 +83,7 @@ class Employees(Resource):
             output = employees_handler.get(emp_id)
             if len(output) == 0:
                 return CustomResponse(data={}, message=f"Employee with id '{emp_id}' not found",
-                                  status_code=404)
+                                      status_code=404)
             return CustomResponse(data=output[0])
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
@@ -133,7 +132,7 @@ class Employees(Resource):
             output = employees_handler.get(emp_id)
             if len(output) == 0:
                 return CustomResponse(data={}, message=f"Employee with id '{emp_id}' not found",
-                                  status_code=404)
+                                      status_code=404)
             publications = None
             if emp_id[0].lower() == 'a':
                 output = authors_handler.get(emp_id)
@@ -165,7 +164,8 @@ class Payment(Resource):
             send_date = payment.get('send_date', None)
             receive_date = payment.get('receive_date', None)
             if send_date is not None and receive_date is not None and \
-                    datetime.strptime(receive_date, "%Y-%m-%d").date() > datetime.strptime(send_date, "%Y-%m-%d").date():
+                    datetime.strptime(receive_date, "%Y-%m-%d").date() > datetime.strptime(send_date,
+                                                                                           "%Y-%m-%d").date():
                 raise ValueError('Receive date has to be after send date')
             transaction_id = payment_handler.set(payment)
             return CustomResponse(data=transaction_id)
@@ -203,7 +203,8 @@ class Payment(Resource):
             received_date = payment.get('received_date', None)
             row_affected = payment_handler.update_claim_date(transaction_id, received_date)
             if row_affected < 1:
-                return CustomResponse(data={}, message=f"Claim date could not be updated for payment with id '{transaction_id}'",
+                return CustomResponse(data={},
+                                      message=f"Claim date could not be updated for payment with id '{transaction_id}'",
                                       status_code=206)
             return CustomResponse(data={}, message="Payment details updated")
 
@@ -225,7 +226,8 @@ class Payment(Resource):
                 raise ValueError('Receive date has to be after send date')
             row_affected = payment_handler.update(transaction_id, payment)
             if row_affected < 1:
-                return CustomResponse(data={}, message=f"Details could not be updated for payment with id '{transaction_id}'",
+                return CustomResponse(data={},
+                                      message=f"Details could not be updated for payment with id '{transaction_id}'",
                                       status_code=206)
             return CustomResponse(data={}, message="Payment details updated")
 

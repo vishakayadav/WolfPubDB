@@ -4,7 +4,7 @@ Module for Handling the Account of Distributor with 'Wolf Pub' Publication House
 from wolfpub.api.utils.custom_exceptions import MariaDBException
 
 from wolfpub.api.utils.query_generator import QueryGenerator
-from wolfpub.constants import ORDERS, ACCOUNTS
+from wolfpub.constants import ORDERS
 
 
 class OrderHandler(object):

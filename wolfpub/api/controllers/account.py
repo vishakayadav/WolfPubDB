@@ -53,7 +53,8 @@ class AccountOrders(Resource):
             books = book_handler.get_ids({'items': items['books']}) if items['books'] else []  # pub_id, isbn, price
             periodicals = periodical_handler.get_ids({'items': items['periodicals']}) if items['periodicals'] else []
             books = [{**u, **v} for u in books for v in pub_items['books'] if u['title'] == v['title']]  # add quantity
-            periodicals = [{**u, **v} for u in periodicals for v in pub_items['periodicals'] if u['title'] == v['title']]
+            periodicals = [{**u, **v} for u in periodicals for v in pub_items['periodicals'] if
+                           u['title'] == v['title']]
             order['total_price'] = order_handler.get_total_price(books + periodicals)
             if 'shipping_cost' not in order:
                 shipping_cost = 2 * (sum([b['quantity'] for b in books]) + sum([p['quantity'] for p in periodicals]))

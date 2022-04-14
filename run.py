@@ -1,5 +1,5 @@
 from flask import Blueprint
-# from gevent import pywsgi
+from gevent import pywsgi
 
 from wolfpub import app
 from wolfpub import config
@@ -17,11 +17,11 @@ def configure_app(flask_app):
 
 
 def initialize_app(flask_app):
-    '''
+    """
         TODO:
             -> Move namespaces import here
             -> Run mongo in fg to see number of connections
-    '''
+    """
     configure_app(flask_app)
     blueprint = Blueprint('api', __name__, url_prefix=config.API_SETTINGS["URL_PREFIX"])
     api.init_app(blueprint)
@@ -51,8 +51,10 @@ def initialize_app(flask_app):
 
 if __name__ == '__main__':
     initialize_app(app)
-    app.run(host=config.API_SETTINGS['HOST'],
-            port=int(config.API_SETTINGS['PORT']),
-            debug=bool(config.API_SETTINGS['FLASK_DEBUG']))
-    # WSGI_SERVER = pywsgi.WSGIServer((config.API_SETTINGS["HOST"], int(config.API_SETTINGS["PORT"])), app)
-    # WSGI_SERVER.serve_forever()
+    if config.API_SETTINGS['ENVIRONMENT'] == 'prod':
+        WSGI_SERVER = pywsgi.WSGIServer((config.API_SETTINGS["HOST"], int(config.API_SETTINGS["PORT"])), app)
+        WSGI_SERVER.serve_forever()
+    else:
+        app.run(host=config.API_SETTINGS['HOST'],
+                port=int(config.API_SETTINGS['PORT']),
+                debug=bool(config.API_SETTINGS['FLASK_DEBUG']))

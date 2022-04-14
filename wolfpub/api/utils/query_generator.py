@@ -10,6 +10,7 @@ class QueryGenerator(object):
     """
     Focuses on providing the functionality to create AuroraPg sub-queries for the arguments provided
     """
+
     def __init__(self):
         self.where_operators = ['>', '<', '>=', '<=', 'like', 'ilike']
         self.set_operators = ['+', '-', '/', '*']
@@ -101,4 +102,3 @@ class QueryGenerator(object):
         where_cond = self.get_where_cond(condition)
         query = f"""delete from {table_name} where {where_cond}"""
         return query
-

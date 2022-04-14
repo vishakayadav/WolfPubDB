@@ -10,6 +10,7 @@ class PaymentHandler(object):
     """
     Focuses on providing functionality for payments to employees
     """
+
     def __init__(self, db):
         self.db = db
         self.table_name = SALARY_PAYMENTS['table_name']

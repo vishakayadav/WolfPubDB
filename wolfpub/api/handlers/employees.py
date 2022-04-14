@@ -3,9 +3,10 @@ Module for Handling Content Writers
 """
 
 import random
+
 from wolfpub.api.utils.custom_exceptions import MariaDBException
-from wolfpub.api.utils.query_generator import QueryGenerator
 from wolfpub.api.utils.custom_response import CustomResponse
+from wolfpub.api.utils.query_generator import QueryGenerator
 from wolfpub.constants import EMPLOYEES, WRITE_BOOKS, WRITE_ARTICLES, REVIEW_PUBLICATION, AUTHORS, EDITORS
 
 

@@ -1,7 +1,6 @@
 """
 API Request Model
 """
-from datetime import datetime
 
 from flask_restplus import fields, inputs
 from flask_restplus import reqparse
@@ -170,12 +169,11 @@ PUBLICATION_EDITOR_ARGUMENTS = api.model("Review_Publications_Model", {
 SEARCH_ARGUMENTS = api.model("Filter_Model", {
     "filter": fields.String(min_length=1, max_length=25, required=True),
     "meta": fields.Nested(api.model("filterCriteriaModel", {
-            "topic": fields.String(min_length=1, max_length=25, required=False),
-            "date_range": fields.Date(required=False),
-            "author": fields.String(min_length=1, max_length=25, required=False)
-        }), required=True)
+        "topic": fields.String(min_length=1, max_length=25, required=False),
+        "date_range": fields.Date(required=False),
+        "author": fields.String(min_length=1, max_length=25, required=False)
+    }), required=True)
 })
-
 
 REGISTER_ARGUMENT = reqparse.RequestParser()
 REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)

@@ -6,7 +6,7 @@ from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 
 from wolfpub.api.utils.query_generator import QueryGenerator
-from wolfpub.constants import ORDERS, ACCOUNTS, ACCOUNT_BILLS, ACCOUNT_PAYMENTS
+from wolfpub.constants import ACCOUNTS, ACCOUNT_BILLS, ACCOUNT_PAYMENTS
 
 
 class AccountHandler(object):
@@ -71,10 +71,10 @@ class AccountBillHandler(object):
         this_week = today - relativedelta(day=today.day - today.weekday())
         days_diff = (this_week - bill_week).days
         month_diff = ((this_month.year - bill_month.year) * 12) + this_month.month - bill_month.month
-        return {'monthly': [bill_date + relativedelta(months=m) for m in range(1, month_diff+1, 1)],
-                'quarterly': [bill_date + relativedelta(months=m) for m in range(3, month_diff+1, 3)],
-                'biweekly': [bill_date + relativedelta(days=day) for day in range(14, days_diff+1, 14)],
-                'weekly': [bill_date + relativedelta(days=day) for day in range(7, days_diff+1, 7)]}
+        return {'monthly': [bill_date + relativedelta(months=m) for m in range(1, month_diff + 1, 1)],
+                'quarterly': [bill_date + relativedelta(months=m) for m in range(3, month_diff + 1, 3)],
+                'biweekly': [bill_date + relativedelta(days=day) for day in range(14, days_diff + 1, 14)],
+                'weekly': [bill_date + relativedelta(days=day) for day in range(7, days_diff + 1, 7)]}
 
     def get(self, account_id: str, order_id: str, select_cols: list = None):
         if select_cols is None:

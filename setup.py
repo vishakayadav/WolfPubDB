@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+
 from wolfpub.config import API_SETTINGS
 
 setup(
