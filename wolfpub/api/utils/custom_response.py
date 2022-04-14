@@ -4,6 +4,10 @@ from flask import Response
 
 
 class CustomResponse(Response):
+    """
+    Success response structure: {'data': {}, 'message': '', 'status_code': 200}
+    Error response structure: {'error': '<error_class>', 'message': '<error_msg>', 'status_code': 400}
+    """
     def __init__(self, data: dict = None, error: str = None, status_code: int = 200, message: str = 'OK', **kwargs):
         response_object = {
             'message': message,
