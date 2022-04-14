@@ -227,7 +227,7 @@ class Chapter(Resource):
             next_chapter_id = book_handler.get_latest_chapter(publication_id)
             chapter['chapter_id'] = int(next_chapter_id)
             chapter_id = book_handler.set_chapter(chapter)
-            return CustomResponse(data=chapter_id)
+            return CustomResponse(data=[next_chapter_id])
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
