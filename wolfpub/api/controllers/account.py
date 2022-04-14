@@ -32,6 +32,26 @@ periodical_handler = PeriodicalHandler(mariadb)
 order_handler = OrderHandler(mariadb)
 
 
+@ns.route("/<string:account_id>")
+class Account(Resource):
+    """
+    Focuses on fetching distributor details from account registered with WolfPubDB.
+    """
+
+    # Fetch account details
+    def get(self, account_id):
+        """
+        End-point to get the existing distributors details
+        """
+        try:
+            output = account_handler.get(account_id)
+            return CustomResponse(data=output)
+        except (QueryGenerationException, MariaDBException, ValueError) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+        except IndexError as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=404)
+
+
 # Creating new orders from an account
 @ns.route("/<string:account_id>/orders")
 class AccountOrders(Resource):
@@ -74,8 +94,13 @@ class AccountOrders(Resource):
 
             if not books and not periodicals:
                 raise ValueError("Publications to be ordered not found with WolfPub Publication House")
-            order_id = order_handler.set(order, books, periodicals)
-            return CustomResponse(data=order_id)
+            order.update(order_handler.set(order, books, periodicals))
+            try:
+                bill = account_bill_handler.create_bill(account_id, order, bill_date=order['order_date'])
+                msg = f"Order Placed! Bill Generated with Id {bill['bill_id']}"
+            except Exception:
+                msg = "Order Placed! Bill Generation Failed"
+            return CustomResponse(data=order, message=msg)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
         except IndexError as e:
@@ -179,7 +204,8 @@ class AccountPayments(Resource):
             # Create payment for an account
             account_handler.get(account_id)
             payment = json.loads(request.data)
-            payment_id = account_bill_handler.pay_bills(account_id, payment['amount'])
+            payment_id = account_bill_handler.pay_bills(account_id, payment['amount'],
+                                                        payment.get('payment_date', ''))
             return CustomResponse(data=payment_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)

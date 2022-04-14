@@ -4,6 +4,7 @@ To handle the Distributor and its account
 
 from datetime import datetime, timedelta
 
+from dateutil.relativedelta import relativedelta
 from flask import request
 from flask_restplus import Resource
 
@@ -11,7 +12,7 @@ from wolfpub.api.handlers.account import AccountBillHandler
 from wolfpub.api.handlers.distributor import DistributorHandler
 from wolfpub.api.handlers.report import ReportHandler
 from wolfpub.api.models.serializers import REVENUE_REPORT_ARGUMENTS, SALARY_REPORT_ARGUMENTS, \
-    TIME_PERIOD_REPORT_ARGUMENTS
+    TIME_PERIOD_REPORT_ARGUMENTS, MONTHLY_REPORT_ARGUMENTS
 from wolfpub.api.restplus import api
 from wolfpub.api.utils.custom_exceptions import QueryGenerationException, MariaDBException
 from wolfpub.api.utils.custom_response import CustomResponse
@@ -33,16 +34,24 @@ class MonthlyReport(Resource):
     Focuses on monthly report of WolfPubDB.
     """
 
+    @ns.expect(MONTHLY_REPORT_ARGUMENTS, validate=True)
     def get(self):
         """
         End-point to get the monthly report of revenue and expenditure
         """
         try:
-            today = datetime.today()
-            yesterday = today - timedelta(days=1)
-            start_date = yesterday.replace(day=1).strftime("%Y-%m-%d")
-            end_date = today.strftime('%Y-%m-%d')
+            month = request.args.get('month', None)
+            year = request.args.get('year', None)
+            if not month or not year:
+                today = datetime.today()
+                month = today.month
+                year = today.year
+            start_date = datetime(int(year), int(month), 1)
+            end_date = start_date + relativedelta(months=1)
+            start_date = start_date.strftime('%Y-%m-%d')
+            end_date = end_date.strftime('%Y-%m-%d')
             output = {}
+            output['order_per_pub_per_dist'] = report_handler.get_number_price_per_publication_per_distributor(start_date, end_date)
             output['total_revenue'] = report_handler.get_revenue(start_date, end_date)
             output['total_expense'] = report_handler.get_salary_expense(start_date, end_date)
             output['total_expense'].update(report_handler.get_shipping_cost_expense(start_date, end_date))

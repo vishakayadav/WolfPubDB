@@ -6,7 +6,7 @@ from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 
 from wolfpub.api.utils.query_generator import QueryGenerator
-from wolfpub.constants import ACCOUNTS, ACCOUNT_BILLS, ACCOUNT_PAYMENTS
+from wolfpub.constants import ACCOUNTS, ACCOUNT_BILLS, ACCOUNT_PAYMENTS, DISTRIBUTORS
 
 
 class AccountHandler(object):
@@ -28,7 +28,8 @@ class AccountHandler(object):
     # Get account
     def get(self, account_id: str):
         cond = {'account_id': account_id, 'is_active': 1}
-        select_query = self.query_gen.select(self.table_name, ['*'], cond)
+        table = f"{self.table_name} natural join {DISTRIBUTORS['table_name']}"
+        select_query = self.query_gen.select(table, ['*'], cond)
         account = self.db.get_result(select_query)
         if not account:
             raise IndexError(f"Account with id '{account_id}' Not Registered")
@@ -93,10 +94,11 @@ class AccountBillHandler(object):
         return account_bill[0]
 
     # Create new bill
-    def create_bill(self, account_id: str, order: dict):
+    def create_bill(self, account_id: str, order: dict, bill_date=None):
         today = date.today().strftime('%Y-%m-%d')
         bill_amount = float(order['total_price']) + float(order['shipping_cost'])
-        data = {'account_id': account_id, 'order_id': order['order_id'], 'amount': bill_amount, 'bill_date': today}
+        data = {'account_id': account_id, 'order_id': order['order_id'], 'amount': bill_amount,
+                'bill_date': bill_date or today}
         insert_query = self.query_gen.insert(self.table_name, [data])
         update_date = {'balance': {'+': bill_amount}}
         update_query = self.query_gen.update(ACCOUNTS['table_name'], {'account_id': account_id}, update_date)
@@ -104,8 +106,9 @@ class AccountBillHandler(object):
         return {'bill_id': last_row_id[0]}
 
     # Pay bill
-    def pay_bills(self, account_id: str, amount):
-        data = {'account_id': account_id, 'amount': amount, 'payment_date': date.today().strftime('%Y-%m-%d')}
+    def pay_bills(self, account_id: str, amount: float, payment_date=None):
+        today = date.today().strftime('%Y-%m-%d')
+        data = {'account_id': account_id, 'amount': amount, 'payment_date': payment_date or today}
         insert_query = self.query_gen.insert(ACCOUNT_PAYMENTS['table_name'], [data])
         update_data = {'balance': {'-': amount}}
         update_query = self.query_gen.update(ACCOUNTS['table_name'], {'account_id': account_id}, update_data)

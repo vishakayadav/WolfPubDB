@@ -3,7 +3,8 @@ Module for handling distributors
 """
 
 from wolfpub.api.utils.query_generator import QueryGenerator
-from wolfpub.constants import DISTRIBUTORS, ACCOUNT_PAYMENTS, SALARY_PAYMENTS, ORDERS, ACCOUNTS, AUTHORS
+from wolfpub.constants import DISTRIBUTORS, ACCOUNT_PAYMENTS, SALARY_PAYMENTS, ORDERS, ACCOUNTS, AUTHORS, \
+    BOOK_ORDERS_INFO, PERIODICAL_ORDERS_INFO
 
 
 class ReportHandler(object):
@@ -25,6 +26,18 @@ class ReportHandler(object):
         cond.update({'<': end_date} if end_date else {})
         return {date_col: cond} if cond else cond
 
+    # Get Number of publications and total price of publication for each publication for each distributor
+    def get_number_price_per_publication_per_distributor(self, start_date: str, end_date: str):
+        cond = self.date_cond('order_date', start_date, end_date)
+        group_by = ['account_id', 'publication_id']
+        inner_select_query1 = self.query_gen.select(BOOK_ORDERS_INFO['table_name'], ['*'])
+        inner_select_query2 = self.query_gen.select(PERIODICAL_ORDERS_INFO['table_name'], ['*'])
+        union_query = f"({inner_select_query1} union {inner_select_query2}) as t natural join {ORDERS['table_name']}"
+        select_query = self.query_gen.select(union_query,
+                                             group_by + ['sum(quantity) total_quantity', 'sum(price) total_price'],
+                                             cond, group_by)
+        return self.db.get_result(select_query)
+
     # Fetch count of active distributors
     def get_active_distributor_count(self, cond=None):
         select_query = self.query_gen.select(ACCOUNTS['table_name'], ['count(account_id) as total_distributors'], cond)
@@ -40,7 +53,7 @@ class ReportHandler(object):
         revenue = self.db.get_result(select_query)[0]['total_revenue']
         return float(revenue) if revenue else 0.00
 
-    # Generate revenue for a distributor
+    # Generate revenue for each distributor
     def get_revenue_per_distributor(self, start_date: str = None, end_date: str = None):
         group_by = ['account_id']
         cond = self.date_cond('payment_date', start_date, end_date)
@@ -51,7 +64,7 @@ class ReportHandler(object):
             raise ValueError('No revenue collected from Distributors for given parameters')
         return revenue
 
-    # Generate revenue for a city
+    # Generate revenue for each city
     def get_revenue_per_city(self, start_date: str = None, end_date: str = None):
         group_by = ['city']
         cond = self.date_cond('payment_date', start_date, end_date)
@@ -61,7 +74,7 @@ class ReportHandler(object):
             raise ValueError('No revenue collected from any City for given parameters')
         return revenue
 
-    # Generate revenue for a location
+    # Generate revenue for each location
     def get_revenue_per_location(self, start_date: str = None, end_date: str = None):
         group_by = ['location', 'city']
         cond = self.date_cond('payment_date', start_date, end_date)

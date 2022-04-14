@@ -27,7 +27,7 @@ SUGGEST_FILTER_ARGUMENTS = api.model("Suggest_Filter_Model", {
 })
 
 DISTRIBUTOR_ARGUMENTS = api.model("Distributor_Model", {
-    "distributor_id": fields.String(min_length=1, max_length=6, required=True),
+    "distributor_id": fields.String(min_length=1, max_length=6, required=False),
     "name": fields.String(min_length=1, max_length=200, required=True),
     "distributor_type": fields.String(min_length=1, max_length=20, required=True),
     "address": fields.String(min_length=1, max_length=100, required=True),
@@ -70,7 +70,8 @@ ORDER_ARGUMENTS = api.model("Order_Model", {
 })
 
 PAYMENT_ARGUMENTS = api.model("Payment_Model", {
-    "amount": fields.Float(required=True)
+    "amount": fields.Float(required=True),
+    "payment_date": fields.Date(required=False)
 })
 
 EMPLOYEE_ARGUMENTS = api.model("Employee_Model", {
@@ -179,6 +180,10 @@ SEARCH_ARGUMENTS = api.model("Filter_Model", {
 REGISTER_ARGUMENT = reqparse.RequestParser()
 REGISTER_ARGUMENT.add_argument('register', type=inputs.boolean, location='args', required=False)
 
+MONTHLY_REPORT_ARGUMENTS = reqparse.RequestParser()
+MONTHLY_REPORT_ARGUMENTS.add_argument('month', type=int, location='args', required=False)
+MONTHLY_REPORT_ARGUMENTS.add_argument('year', type=int, location='args', required=False)
+
 TIME_PERIOD_REPORT_ARGUMENTS = reqparse.RequestParser()
 TIME_PERIOD_REPORT_ARGUMENTS.add_argument('start_date', type=str, location='args', required=False)
 TIME_PERIOD_REPORT_ARGUMENTS.add_argument('end_date', type=str, location='args', required=False)
@@ -191,3 +196,4 @@ REVENUE_REPORT_ARGUMENTS.add_argument('stats', type=str, location='args',
 SALARY_REPORT_ARGUMENTS = reqparse.RequestParser()
 SALARY_REPORT_ARGUMENTS.add_argument('stats', type=str, location='args', help='per_month, per_work_type',
                                      required=False)
+
