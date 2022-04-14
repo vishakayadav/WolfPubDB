@@ -76,41 +76,23 @@ class AccountBillHandler(object):
                 'biweekly': [bill_date + relativedelta(days=day) for day in range(14, days_diff+1, 14)],
                 'weekly': [bill_date + relativedelta(days=day) for day in range(7, days_diff+1, 7)]}
 
-    def create_bill(self, account_id: str, periodicity: str = 'monthly'):
-        cond = {'account_id': account_id}
-        select_query_lastest_bill_date = self.query_gen.select(self.table_name, ['max(bill_date) as latest_date'], cond)
-        row = self.db.get_result(select_query_lastest_bill_date)
-        print(row)
-        latest_bill_date = row[0]['latest_date'] if row else ''
-        latest_bill_date = latest_bill_date.strftime('%Y-%m-%d') if latest_bill_date else '2021-07-01'
-        intervals = self.get_intervals(latest_bill_date)[periodicity]
-        start_date = latest_bill_date
-        bills = []
-        data = []
-        bill_amount = 0.00
-        for end_date in intervals:
-            end_date = end_date.strftime('%Y-%m-%d')
-            cond_with_order_date = {'account_id': account_id,
-                                    'order_date': {'>=': start_date, '<': end_date}}
-            select_query_bill_amt = self.query_gen.select(ORDERS['table_name'],
-                                                          ['sum(total_price + shipping_cost) bill'],
-                                                          cond_with_order_date)
-            bill = self.db.get_result(select_query_bill_amt)[0]
-            start_date = end_date
-            if bill['bill']:
-                bill['date'] = end_date
-                bills.append(bill)
+    def get(self, account_id: str, order_id: str, select_cols: list = None):
+        if select_cols is None:
+            select_cols = ['*']
+        select_query = self.query_gen.select(self.table_name, select_cols, {'account_id': account_id,
+                                                                            'order_id': order_id})
+        account_bill = self.db.get_result(select_query)
+        if not account_bill:
+            raise IndexError(f"No Billed Order with id '{order_id}' Found")
+        return account_bill[0]
 
-        if not bills:
-            raise ValueError(f"No new Order placed using Account ID '{account_id}' "
-                             f"for previous months after {latest_bill_date}")
-
-        for bill in bills:
-            data.append({'account_id': account_id, 'amount': float(bill['bill']), 'bill_date': str(bill['date'])})
-            bill_amount += float(bill['bill'])
-        insert_query = self.query_gen.insert(self.table_name, data)
+    def create_bill(self, account_id: str, order: dict):
+        today = date.today().strftime('%Y-%m-%d')
+        bill_amount = float(order['total_price']) + float(order['shipping_cost'])
+        data = {'account_id': account_id, 'order_id': order['order_id'], 'amount': bill_amount, 'bill_date': today}
+        insert_query = self.query_gen.insert(self.table_name, [data])
         update_date = {'balance': {'+': bill_amount}}
-        update_query = self.query_gen.update(ACCOUNTS['table_name'], cond, update_date)
+        update_query = self.query_gen.update(ACCOUNTS['table_name'], {'account_id': account_id}, update_date)
         _, last_row_id = self.db.execute([insert_query, update_query])
         return {'bill_id': last_row_id[0]}
 

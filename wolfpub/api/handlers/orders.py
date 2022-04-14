@@ -4,7 +4,7 @@ Module for Handling the Account of Distributor with 'Wolf Pub' Publication House
 from wolfpub.api.utils.custom_exceptions import MariaDBException
 
 from wolfpub.api.utils.query_generator import QueryGenerator
-from wolfpub.constants import ORDERS
+from wolfpub.constants import ORDERS, ACCOUNTS
 
 
 class OrderHandler(object):
@@ -34,12 +34,24 @@ class OrderHandler(object):
                  'quantity': order.get('quantity', 1),
                  'price': float(order['price']) * int(order.get('quantity', 1))} for order in obj]
 
-    def get(self, account_id, order_ids, select_cols: list = None):
+    def get_orders(self, account_id, select_cols: list = None):
+        if select_cols is None:
+            select_cols = ['*']
+        select_query = self.query_gen.select(self.table_name, select_cols, {'account_id': account_id})
+        orders = self.db.get_result(select_query)
+        if not orders:
+            raise IndexError(f"No Order Found for given Account Id")
+        return orders
+
+    def get_order(self, account_id, order_id, select_cols: list = None):
         if select_cols is None:
             select_cols = ['*']
         select_query = self.query_gen.select(self.table_name, select_cols, {'account_id': account_id,
-                                                                            'order_id': order_ids})
-        return self.db.get_result(select_query)
+                                                                            'order_id': order_id})
+        order = self.db.get_result(select_query)
+        if not order:
+            raise IndexError(f"Order with id '{order_id}' Not Found for given Account Id")
+        return order[0]
 
     def set(self, order: dict, book_orders: list[dict], periodical_orders: list[dict]):
         insert_query = self.query_gen.insert(self.table_name, [order])

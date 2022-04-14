@@ -89,6 +89,31 @@ class AccountOrder(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=404)
 
 
+@ns.route("/<string:account_id>/orders/<string:order_id>/bills")
+class AccountOrderBills(Resource):
+    """
+    Focuses on managing the account's bill for distributors of WolfPubDB.
+    """
+
+    def post(self, account_id, order_id):
+        """
+        End-point to add bill to the distributor's account for the orders placed by the distributor
+        """
+        try:
+            account_handler.get(account_id)
+            order = order_handler.get_order(account_id, order_id)
+            try:
+                bill = account_bill_handler.get(account_id, order_id)
+                return CustomResponse(data=bill, message='Bill already existed')
+            except IndexError:
+                bill_id = account_bill_handler.create_bill(account_id, order)
+            return CustomResponse(data=bill_id)
+        except (QueryGenerationException, MariaDBException, ValueError) as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
+        except IndexError as e:
+            return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=404)
+
+
 @ns.route("/<string:account_id>/bills")
 class AccountBills(Resource):
     """
@@ -100,9 +125,15 @@ class AccountBills(Resource):
         End-point to add bill to the distributor's account for the orders placed by the distributor
         """
         try:
-            account = account_handler.get(account_id)
-            bill_id = account_bill_handler.create_bill(account_id, periodicity=account['periodicity'].lower())
-            return CustomResponse(data=bill_id)
+            account_handler.get(account_id)
+            orders = order_handler.get_orders(account_id)
+            bill_ids = []
+            for order in orders:
+                try:
+                    account_bill_handler.get(account_id, order['order_id'])
+                except IndexError:
+                    bill_ids.append(account_bill_handler.create_bill(account_id, order)['bill_id'])
+            return CustomResponse(data={'bill_ids': bill_ids})
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
         except IndexError as e:
