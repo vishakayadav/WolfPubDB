@@ -296,7 +296,7 @@ class Article(Resource):
             next_article_id = periodical_handler.get_latest_article(publication_id)
             article['article_id'] = int(next_article_id)
             article_id = periodical_handler.set_article(article)
-            return CustomResponse(data=article_id)
+            return CustomResponse(data=[next_article_id])
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 

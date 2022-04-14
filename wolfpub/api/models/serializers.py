@@ -106,7 +106,7 @@ PUBLICATION_ARGUMENTS = api.model("Publication_Model", {
 })
 
 BOOK_ARGUMENTS = api.model("Book_Model", {
-    "isbn": fields.String(min_length=1, max_length=20, pattern='\\d{3}-\\d{1}-\\d{2}-\\d{6}-\\d{1}', required=False),
+    "isbn": fields.String(min_length=1, max_length=20, pattern='\\d+', required=False),
     "creation_date": fields.Date(required=True),
     "is_available": fields.Boolean(default=True)
 })
@@ -123,7 +123,7 @@ PUBLICATION_ALL_ARGUMENTS = api.model("Overall_Publication_Model", {
     "topic": fields.String(min_length=1, max_length=200, required=True),
     "publication_date": fields.Date(required=True),
     "price": fields.Float(required=True),
-    "isbn": fields.String(min_length=1, max_length=20, pattern='\\d{3}-\\d{1}-\\d{2}-\\d{6}-\\d{1}', required=False),
+    "isbn": fields.String(min_length=1, max_length=20, pattern='\\d+', required=False),
     "creation_date": fields.Date(required=True),
     "issn": fields.String(min_length=1, max_length=8, pattern='\\d{4}-\\d{4}', required=False),
     "issue": fields.String(min_length=1, max_length=20, required=True),

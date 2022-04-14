@@ -59,7 +59,6 @@ class EmployeesHandler(object):
         try:
             insert_query = self.query_gen.insert(self.table_name, [employee])
             _, last_row_id = self.db._execute(insert_query, cursor)
-            print(last_row_id)
             if cw_type == "author":
                 insert_query = self.query_gen.insert(self.author_table_name, [content_writer])
                 _, last_row_id = self.db._execute(insert_query, cursor)

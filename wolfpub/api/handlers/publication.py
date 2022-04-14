@@ -68,7 +68,6 @@ class PublicationHandler(object):
             elif pub_type == "periodical":
                 periodical['publication_id'] = publication_id
                 insert_query = self.query_gen.insert(self.periodical_table_name, [periodical])
-                print(insert_query)
                 _, last_row_id = self.db._execute(insert_query, cursor)
 
             self.db.conn.commit()
@@ -255,7 +254,6 @@ class BookHandler(PublicationHandler):
         if select_cols is None:
             select_cols = self.primary_key
         select_query = self.query_gen.select(table, select_cols, condition)
-        print(select_query)
         return self.db.get_result(select_query)
 
     def set_author(self, association):
@@ -312,7 +310,6 @@ class PeriodicalHandler(PublicationHandler):
 
     def set_article(self, article: dict):
         insert_query = self.query_gen.insert(self.article_table_name, [article])
-        print(insert_query)
         _, last_row_id = self.db.execute([insert_query])
         return {'article_id': last_row_id[-1]}
 
@@ -373,7 +370,6 @@ class PeriodicalHandler(PublicationHandler):
         if select_cols is None:
             select_cols = self.primary_key
         select_query = self.query_gen.select(self.article_filter_table_name, select_cols, condition)
-        print(select_query)
         return self.db.get_result(select_query)
 
     def set_author(self, association):
