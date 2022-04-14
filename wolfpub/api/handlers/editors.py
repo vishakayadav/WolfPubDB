@@ -1,5 +1,5 @@
 """
-Module for Handling Editors
+Module for handling Editors
 """
 
 from wolfpub.api.utils.query_generator import QueryGenerator
@@ -16,22 +16,26 @@ class EditorsHandler(object):
         self.table_name = EDITORS['table_name']
         self.query_gen = QueryGenerator()
 
+    # Create new editor
     def set(self, employee: dict):
         insert_query = self.query_gen.insert(self.table_name, [employee])
         _, last_row_id = self.db.execute([insert_query])
         return {'emp_id': last_row_id}
 
+    # Fetch existing editor
     def get(self, emp_id: str):
         cond = {'emp_id': emp_id}
         select_query = self.query_gen.select(self.table_name, ['*'], cond)
         return self.db.get_result(select_query)
 
+    # Update editor
     def update(self, emp_id: str, update_data: dict):
         cond = {'emp_id': emp_id}
         update_query = self.query_gen.update(self.table_name, cond, update_data)
         row_affected, _ = self.db.execute([update_query])
         return row_affected
 
+    # Remove editor
     def remove(self, emp_id: str):
         cond = {'emp_id': emp_id}
         delete_query = self.query_gen.delete(self.table_name, cond)

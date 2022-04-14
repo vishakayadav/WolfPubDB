@@ -1,5 +1,5 @@
 """
-Module for Handling Content Writers
+Module for handling employees
 """
 
 import random
@@ -12,7 +12,7 @@ from wolfpub.constants import EMPLOYEES, WRITE_BOOKS, WRITE_ARTICLES, REVIEW_PUB
 
 class EmployeesHandler(object):
     """
-    Focuses on providing functionality for Content Writers
+    Focuses on providing functionality for employees
     """
 
     def __init__(self, db):
@@ -28,6 +28,7 @@ class EmployeesHandler(object):
         self.editor_publication_table_name = REVIEW_PUBLICATION['table_name']
         self.query_gen = QueryGenerator()
 
+    # Generate employee ID based on job type
     @staticmethod
     def get_employee_id(employee: dict):
         try:
@@ -48,6 +49,7 @@ class EmployeesHandler(object):
         except ValueError as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
+    # Create new employee
     def set(self, employee: dict, content_writer: dict):
         cw_type = employee['cw_type']
         emp_id = self.get_employee_id(employee)
@@ -74,17 +76,20 @@ class EmployeesHandler(object):
 
         return {'emp_id': emp_id}
 
+    # Fetch existing employee
     def get(self, emp_id: str):
         cond = {'emp_id': emp_id}
         select_query = self.query_gen.select(self.table_name, ['*'], cond)
         return self.db.get_result(select_query)
 
+    # Update employee
     def update(self, emp_id: str, update_data: dict):
         cond = {'emp_id': emp_id}
         update_query = self.query_gen.update(self.table_name, cond, update_data)
         row_affected, _ = self.db.execute([update_query])
         return row_affected
 
+    # Remove employee
     def remove(self, emp_id: str):
         cond = {'emp_id': emp_id}
         cursor = self.db.get_cursor()
@@ -106,6 +111,7 @@ class EmployeesHandler(object):
 
         return row_affected
 
+    # Fetch publications for an author based on writer or journalist
     def get_author_publications(self, emp_id: str, author_type: str):
         cond = {'emp_id': emp_id}
         if author_type == "writer":
@@ -119,6 +125,7 @@ class EmployeesHandler(object):
             author_articles = self.db.get_result(select_query)
             return author_articles
 
+    # Fetch publications for an editor
     def get_editor_publications(self, emp_id: str):
         cond = {'emp_id': emp_id}
         select_cols = ['emp_id', 'publication_id']

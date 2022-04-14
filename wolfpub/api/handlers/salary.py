@@ -16,16 +16,19 @@ class PaymentHandler(object):
         self.table_name = SALARY_PAYMENTS['table_name']
         self.query_gen = QueryGenerator()
 
+    # Get payment info
     def get_payment(self, transaction_id):
         cond = {'transaction_id': transaction_id}
         select_query = self.query_gen.select(self.table_name, ['*'], cond)
         return self.db.get_result(select_query)
 
+    # Create new payment
     def set(self, payment: dict):
         insert_query = self.query_gen.insert(self.table_name, [payment])
         _, last_row_id = self.db.execute([insert_query])
         return {'transaction_id': last_row_id[-1]}
 
+    # Claim salary payment
     def update_claim_date(self, transaction_id: str, received_date: str):
         cond = {'transaction_id': transaction_id}
         update_data = {'received_date': received_date}
@@ -33,6 +36,7 @@ class PaymentHandler(object):
         row_affected, _ = self.db.execute([update_query])
         return row_affected
 
+    # Update payment info
     def update(self, transaction_id: str, payment_data: dict):
         cond = {'transaction_id': transaction_id}
         update_query = self.query_gen.update(self.table_name, cond, payment_data)

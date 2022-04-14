@@ -1,5 +1,5 @@
 """
-Module for Handling the Account of Distributor with 'Wolf Pub' Publication House
+Module for handling the account of Distributor with 'Wolf Pub' Publication House
 """
 from wolfpub.api.utils.custom_exceptions import MariaDBException
 
@@ -18,6 +18,7 @@ class OrderHandler(object):
         self.id_column = 'order_id'
         self.query_gen = QueryGenerator()
 
+    # Get total price for order
     @staticmethod
     def get_total_price(publications: list):
         total_price = 0
@@ -27,6 +28,7 @@ class OrderHandler(object):
             total_price += float(pub['price']) * int(pub.get('quantity', '1'))
         return total_price
 
+    # Util function to prepare order json
     @staticmethod
     def reformat_publication_order(obj: list, order_id: int):
         return [{'order_id': order_id,
@@ -34,6 +36,7 @@ class OrderHandler(object):
                  'quantity': order.get('quantity', 1),
                  'price': float(order['price']) * int(order.get('quantity', 1))} for order in obj]
 
+    # Fetch all orders for an account
     def get_orders(self, account_id, select_cols: list = None):
         if select_cols is None:
             select_cols = ['*']
@@ -43,6 +46,7 @@ class OrderHandler(object):
             raise IndexError(f"No Order Found for given Account Id")
         return orders
 
+    # Fetch order with ID
     def get_order(self, account_id, order_id, select_cols: list = None):
         if select_cols is None:
             select_cols = ['*']
@@ -53,6 +57,7 @@ class OrderHandler(object):
             raise IndexError(f"Order with id '{order_id}' Not Found for given Account Id")
         return order[0]
 
+    # Create new order
     def set(self, order: dict, book_orders: list[dict], periodical_orders: list[dict]):
         """
         :param order: { 'delivery_date': '2022-05-01',

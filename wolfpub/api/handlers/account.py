@@ -1,5 +1,5 @@
 """
-Module for Handling the Account of Distributor with 'Wolf Pub' Publication House
+Module for handling the account of distributor with wolfpub
 """
 from datetime import date, datetime
 
@@ -19,11 +19,13 @@ class AccountHandler(object):
         self.table_name = ACCOUNTS['table_name']
         self.query_gen = QueryGenerator()
 
+    # Register account
     def register(self, account: dict):
         insert_query = self.query_gen.insert(self.table_name, [account])
         _, last_row_id = self.db.execute([insert_query])
         return {'account_id': last_row_id[-1]}
 
+    # Get account
     def get(self, account_id: str):
         cond = {'account_id': account_id, 'is_active': 1}
         select_query = self.query_gen.select(self.table_name, ['*'], cond)
@@ -32,6 +34,7 @@ class AccountHandler(object):
             raise IndexError(f"Account with id '{account_id}' Not Registered")
         return account[0]
 
+    # Update account
     def update(self, account_id: str = '', distributor_id: str = '', update_data: dict = {}):
         if not account_id and not distributor_id:
             raise ValueError("Provide either 'account_id' or 'distributor_id' to update Account")
@@ -41,6 +44,7 @@ class AccountHandler(object):
         row_affected, _ = self.db.execute([update_query])
         return row_affected
 
+    # Check balance of account
     def check_balance(self, account_id: str = None, distributor_id: str = None):
         cond = {'account_id': account_id} if account_id else {'distributor_id': distributor_id}
         cond['is_active'] = '1'
@@ -61,6 +65,7 @@ class AccountBillHandler(object):
         self.table_name = ACCOUNT_BILLS['table_name']
         self.query_gen = QueryGenerator()
 
+    # Get date interval for bill
     @staticmethod
     def get_intervals(last_bill_date: str):
         bill_date = datetime.strptime(last_bill_date, "%Y-%m-%d").date()
@@ -76,6 +81,7 @@ class AccountBillHandler(object):
                 'biweekly': [bill_date + relativedelta(days=day) for day in range(14, days_diff + 1, 14)],
                 'weekly': [bill_date + relativedelta(days=day) for day in range(7, days_diff + 1, 7)]}
 
+    # Get bill
     def get(self, account_id: str, order_id: str, select_cols: list = None):
         if select_cols is None:
             select_cols = ['*']
@@ -86,6 +92,7 @@ class AccountBillHandler(object):
             raise IndexError(f"No Billed Order with id '{order_id}' Found")
         return account_bill[0]
 
+    # Create new bill
     def create_bill(self, account_id: str, order: dict):
         today = date.today().strftime('%Y-%m-%d')
         bill_amount = float(order['total_price']) + float(order['shipping_cost'])
@@ -96,6 +103,7 @@ class AccountBillHandler(object):
         _, last_row_id = self.db.execute([insert_query, update_query])
         return {'bill_id': last_row_id[0]}
 
+    # Pay bill
     def pay_bills(self, account_id: str, amount):
         data = {'account_id': account_id, 'amount': amount, 'payment_date': date.today().strftime('%Y-%m-%d')}
         insert_query = self.query_gen.insert(ACCOUNT_PAYMENTS['table_name'], [data])

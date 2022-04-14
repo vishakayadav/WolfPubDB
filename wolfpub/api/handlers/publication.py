@@ -1,5 +1,5 @@
 """
-Module for Handling the Account of Distributor with 'Wolf Pub' Publication House
+Module for handling the account of distributor with 'Wolf Pub' Publication House
 """
 import random
 
