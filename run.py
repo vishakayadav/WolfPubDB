@@ -6,6 +6,7 @@ from wolfpub import config
 from wolfpub.api.restplus import api, custom_apidoc
 
 
+# App configuration
 def configure_app(flask_app):
     """
     To set Swagger Configuration
@@ -17,15 +18,12 @@ def configure_app(flask_app):
 
 
 def initialize_app(flask_app):
-    """
-        TODO:
-            -> Move namespaces import here
-            -> Run mongo in fg to see number of connections
-    """
+
     configure_app(flask_app)
     blueprint = Blueprint('api', __name__, url_prefix=config.API_SETTINGS["URL_PREFIX"])
     api.init_app(blueprint)
 
+    # Adding controllers to the app
     from wolfpub.api.controllers.employees import ns as employees_ns
     api.add_namespace(employees_ns)
 
@@ -44,13 +42,13 @@ def initialize_app(flask_app):
     from wolfpub.api.controllers.healthcheck import ns as healthcheck_namespace
     api.add_namespace(healthcheck_namespace)
 
-    # consider replacing with namespace
     flask_app.register_blueprint(custom_apidoc, url_prefix=config.API_SETTINGS["URL_PREFIX"] + "/static")
     flask_app.register_blueprint(blueprint)
 
 
 if __name__ == '__main__':
     initialize_app(app)
+    # Run the app
     if config.API_SETTINGS['ENVIRONMENT'] == 'prod':
         WSGI_SERVER = pywsgi.WSGIServer((config.API_SETTINGS["HOST"], int(config.API_SETTINGS["PORT"])), app)
         WSGI_SERVER.serve_forever()

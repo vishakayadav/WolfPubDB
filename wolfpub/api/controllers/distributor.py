@@ -18,6 +18,7 @@ from wolfpub.api.utils.mariadb_connector import MariaDBConnector
 
 ns = api.namespace('distributors', description='Route admin for distributor actions.')
 
+# Creating handler objects
 mariadb = MariaDBConnector()
 distributor_handler = DistributorHandler(mariadb)
 account_handler = AccountHandler(mariadb)
@@ -28,10 +29,11 @@ periodical_handler = PeriodicalHandler(mariadb)
 order_handler = OrderHandler(mariadb)
 
 
+# Creating new distributors
 @ns.route("")
 class Distributors(Resource):
     """
-    Focuses on setting distributor in WolfPubDB.
+    Focuses on creating a new distributor in WolfPubDB.
     """
 
     @ns.expect(DISTRIBUTOR_ARGUMENTS, validate=True)
@@ -40,6 +42,7 @@ class Distributors(Resource):
         End-point to set new distributor and register its account
         """
         try:
+            # Form payload for distributor creation
             distributor = json.loads(request.data)
             default_email = f"{distributor['name'].replace(' ', '_').lower()}@wolfpub.com"
             account = {'distributor_id': distributor.get('distributor_id'),
@@ -52,12 +55,14 @@ class Distributors(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Fetch, update or delete distributor
 @ns.route("/<string:distributor_id>")
 class Distributor(Resource):
     """
     Focuses on fetching, updating and deleting distributor from WolfPubDB.
     """
 
+    # Fetch distributor details
     def get(self, distributor_id):
         """
         End-point to get the existing distributors details
@@ -70,6 +75,7 @@ class Distributor(Resource):
         except IndexError as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=404)
 
+    # Update distributor details
     @ns.doc(DISTRIBUTOR_ARGUMENTS, validate=False)
     def put(self, distributor_id):
         """
@@ -98,6 +104,7 @@ class Distributor(Resource):
         except IndexError as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=404)
 
+    # Delete distributor
     def delete(self, distributor_id):
         """
         End-point to delete distributor

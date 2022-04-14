@@ -38,9 +38,9 @@ class EmployeesHandler(object):
                 emp_id = "AS" + emp_no
             elif cw_type == 'editor' and status == 'staff':
                 emp_id = "ES" + emp_no
-            elif cw_type == 'author' and status == 'guest':
+            elif cw_type == 'author' and status == 'invited':
                 emp_id = "AG" + emp_no
-            elif cw_type == 'editor' and status == 'guest':
+            elif cw_type == 'editor' and status == 'invited':
                 emp_id = "EG" + emp_no
             else:
                 raise ValueError('Cannot generate valid employee ID')

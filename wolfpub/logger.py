@@ -17,6 +17,7 @@ class Singleton(type):
         return cls._instances[cls]
 
 
+# Logging class
 class FileLogger(object):
     __metaclass__ = Singleton
 

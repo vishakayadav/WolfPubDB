@@ -1,5 +1,5 @@
 """
-To handle the Content writers, their payments and their work
+To handle the employees, their payments and their work
 """
 
 import json
@@ -21,6 +21,7 @@ from wolfpub.api.utils.mariadb_connector import MariaDBConnector
 
 ns = api.namespace('employees', description='Route admin for employee actions.')
 
+# Creating handler objects
 mariadb = MariaDBConnector()
 employees_handler = EmployeesHandler(mariadb)
 authors_handler = AuthorsHandler(mariadb)
@@ -28,6 +29,7 @@ editors_handler = EditorsHandler(mariadb)
 payment_handler = PaymentHandler(mariadb)
 
 
+# Create new employee
 @ns.route("")
 class Employees(Resource):
     """
@@ -40,14 +42,15 @@ class Employees(Resource):
         End-point to creating new employees
         """
         try:
+            # Form payloads for employee and author/editor
             employee = json.loads(request.data)
             emp_type = employee.get('job_type', 'staff author').lower()
             status = emp_type.split(' ')[0]
             cw_type = emp_type.split(' ')[1]
             if cw_type not in ['author', 'editor']:
                 raise ValueError('Employee must either be an author or an editor')
-            if status not in ['staff', 'guest']:
-                raise ValueError('Employee must either be staff or guest')
+            if status not in ['staff', 'invited']:
+                raise ValueError('Employee must either be staff or invited')
 
             employee['cw_type'] = cw_type
             employee['status'] = status
@@ -55,7 +58,7 @@ class Employees(Resource):
                 'type': status,
                 'payment_frequency': employee.pop('payment_frequency', 'monthly').lower(),
             }
-            if cw['type'] == 'guest':
+            if cw['type'] == 'invited':
                 cw['payment_frequency'] = 'once'
 
             author_type = employee.pop('author_type', 'writer')
@@ -69,12 +72,14 @@ class Employees(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Fetch, update and delete employee
 @ns.route("/<string:emp_id>")
 class Employees(Resource):
     """
     Focuses on fetching, updating and deleting employee details from WolfPubDB.
     """
 
+    # Fetch employee
     def get(self, emp_id):
         """
         End-point to get the existing employee details
@@ -88,6 +93,7 @@ class Employees(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
+    # Update employee
     @ns.doc(EMPLOYEE_ARGUMENTS, validate=False)
     def put(self, emp_id):
         """
@@ -103,6 +109,7 @@ class Employees(Resource):
         except (QueryGenerationException, MariaDBException) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
+    # Delete employee
     def delete(self, emp_id):
         """
         End-point to delete employee
@@ -118,6 +125,7 @@ class Employees(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# View publications for an employee
 @ns.route("/<string:emp_id>/publications")
 class Employees(Resource):
     """
@@ -129,6 +137,7 @@ class Employees(Resource):
         End-point to get the associated publication details for employee
         """
         try:
+            # Fetch employee
             output = employees_handler.get(emp_id)
             if len(output) == 0:
                 return CustomResponse(data={}, message=f"Employee with id '{emp_id}' not found",
@@ -148,6 +157,7 @@ class Employees(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Create salary payments
 @ns.route("/salaries")
 class Payment(Resource):
     """
@@ -160,6 +170,7 @@ class Payment(Resource):
         End-point to create new salary payments
         """
         try:
+            # Read payment details
             payment = json.loads(request.data)
             send_date = payment.get('send_date', None)
             receive_date = payment.get('receive_date', None)
@@ -173,6 +184,7 @@ class Payment(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Fetch salary payment details
 @ns.route("/salaries/<string:transaction_id>")
 class Payment(Resource):
     """

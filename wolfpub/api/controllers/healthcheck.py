@@ -1,5 +1,5 @@
 """
-Health ckeck for Wolf Pub API
+Health check for Wolf Pub API
 """
 
 from flask_restplus import Resource

@@ -1,5 +1,5 @@
 """
-To handle the Content writers, their payments and their work
+To handle the publications for wolfpubDB
 """
 
 import json
@@ -30,6 +30,7 @@ from wolfpub.constants import BOOKS, PERIODICALS
 
 ns = api.namespace('publication', description='Route admin for publication actions.')
 
+# Create handler objects
 mariadb = MariaDBConnector()
 publication_handler = PublicationHandler(mariadb)
 book_handler = BookHandler(mariadb)
@@ -37,6 +38,7 @@ periodical_handler = PeriodicalHandler(mariadb)
 authors_handler = AuthorsHandler(mariadb)
 
 
+# Create new book
 @ns.route("/book")
 class Book(Resource):
     """
@@ -82,6 +84,7 @@ class Book(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Create new periodical
 @ns.route("/periodical")
 class Periodical(Resource):
     """
@@ -128,6 +131,7 @@ class Periodical(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Fetch, update, and delete publication
 @ns.route("/<string:publication_id>")
 class Publication(Resource):
     """
@@ -205,6 +209,7 @@ class Publication(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Create new chapter
 @ns.route("/<string:publication_id>/chapter")
 class Chapter(Resource):
     """
@@ -227,6 +232,7 @@ class Chapter(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Fetch, update, and delete chapter for a publication
 @ns.route("/<string:publication_id>/chapter/<string:chapter_id>")
 class Chapter(Resource):
     """
@@ -279,6 +285,7 @@ class Chapter(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Create new article
 @ns.route("/<string:publication_id>/article")
 class Article(Resource):
     """
@@ -301,6 +308,7 @@ class Article(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Fetch, update, and delete article for a periodical
 @ns.route("/<string:publication_id>/article/<string:article_id>")
 class Article(Resource):
     """
@@ -353,6 +361,7 @@ class Article(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Associate author with an article for a publication
 @ns.route("/<string:publication_id>/article/<string:article_id>/author")
 class Article(Resource):
     """
@@ -402,6 +411,7 @@ class Article(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Delete association between an author and a publication
 @ns.route("/<string:publication_id>/article/<string:article_id>/author/<string:employee_id>")
 class Article(Resource):
     """
@@ -427,6 +437,7 @@ class Article(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Associate author with a book
 @ns.route("/<string:publication_id>/author")
 class Publication(Resource):
     """
@@ -473,6 +484,7 @@ class Publication(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Delete association between an author and a book
 @ns.route("/<string:publication_id>/author/<string:employee_id>")
 class Publication(Resource):
     """
@@ -496,6 +508,7 @@ class Publication(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Associate author with a publication
 @ns.route("/<string:publication_id>/editor")
 class Publication(Resource):
     """
@@ -533,6 +546,7 @@ class Publication(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Delete association between an editor and a publication
 @ns.route("/<string:publication_id>/editor/<string:employee_id>")
 class Publication(Resource):
     """
@@ -556,6 +570,7 @@ class Publication(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Filter publications based on criteria
 @ns.route("/search")
 class Search(Resource):
     """

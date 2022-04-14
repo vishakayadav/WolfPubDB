@@ -1,3 +1,7 @@
+"""
+Defining constants for all DB tables
+"""
+
 DISTRIBUTORS = {
     'table_name': 'distributors',
     'columns': {

@@ -19,12 +19,14 @@ from wolfpub.api.utils.mariadb_connector import MariaDBConnector
 
 ns = api.namespace('reports', description='Route admin for report actions.')
 
+# Creating handler objects
 mariadb = MariaDBConnector()
 distributor_handler = DistributorHandler(mariadb)
 report_handler = ReportHandler(mariadb)
 account_bill_handler = AccountBillHandler(mariadb)
 
 
+# Generate monthly reports
 @ns.route("/monthly")
 class MonthlyReport(Resource):
     """
@@ -49,6 +51,7 @@ class MonthlyReport(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Fetch revenue
 @ns.route("/revenue")
 class RevenueReport(Resource):
     """
@@ -78,6 +81,7 @@ class RevenueReport(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Fetch count of active distributors
 @ns.route("/distributors/active/count")
 class DistributorReport(Resource):
     """
@@ -95,6 +99,7 @@ class DistributorReport(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
 
 
+# Fetch expenses
 @ns.route("/salary-payment")
 class SalaryReport(Resource):
     """

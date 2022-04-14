@@ -1,6 +1,7 @@
 """
-To handle the Distributor
+Account Controller
 """
+
 import copy
 import json
 from datetime import datetime, date
@@ -20,6 +21,7 @@ from wolfpub.api.utils.mariadb_connector import MariaDBConnector
 
 ns = api.namespace('accounts', description='Route for distributor\'s account with Wolf Pub.')
 
+# Creating handler objects
 mariadb = MariaDBConnector()
 distributor_handler = DistributorHandler(mariadb)
 account_handler = AccountHandler(mariadb)
@@ -30,10 +32,11 @@ periodical_handler = PeriodicalHandler(mariadb)
 order_handler = OrderHandler(mariadb)
 
 
+# Creating new orders from an account
 @ns.route("/<string:account_id>/orders")
 class AccountOrders(Resource):
     """
-    Focuses on managing orders of WolfPubDB.
+    Focuses on managing orders for an account of WolfPubDB.
     """
 
     @ns.expect(ORDER_ARGUMENTS, validate=True)
@@ -49,8 +52,12 @@ class AccountOrders(Resource):
             # removed this constraint just to enable demo data insertion. TODO: Revert after Demo date
             # if datetime.strptime(order['delivery_date'], "%Y-%m-%d").date() <= date.today():
             #     raise ValueError('Delivery Date has to be ahead of date of placing Order')
+
+            # Read order date
             if 'order_date' not in order:
                 order['order_date'] = datetime.today().strftime('%Y-%m-%d')
+
+            # Read order items
             pub_items = order.pop('items')  # isbn, quantity
             items = copy.deepcopy(pub_items)
             books = book_handler.get_ids({'items': items['books']}) if items['books'] else []  # pub_id, isbn, price
@@ -58,12 +65,18 @@ class AccountOrders(Resource):
             books = [{**u, **v} for u in books for v in pub_items['books'] if u['title'] == v['title']]  # add quantity
             periodicals = [{**u, **v} for u in periodicals for v in pub_items['periodicals'] if
                            u['title'] == v['title']]
+
+            # Prepare order price and shipping cost
             order['total_price'] = order_handler.get_total_price(books + periodicals)
             if 'shipping_cost' not in order:
                 shipping_cost = 2 * (sum([b['quantity'] for b in books]) + sum([p['quantity'] for p in periodicals]))
                 order['shipping_cost'] = 100 if shipping_cost > 100 else shipping_cost
+<<<<<<< Updated upstream
             if not books and not periodicals:
                 raise ValueError("Publications to be ordered not found with WolfPub Publication House")
+=======
+
+>>>>>>> Stashed changes
             order_id = order_handler.set(order, books, periodicals)
             return CustomResponse(data=order_id)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
@@ -72,6 +85,7 @@ class AccountOrders(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=404)
 
 
+# Fetch an order for an account
 @ns.route("/<string:account_id>/orders/<string:order_id>")
 class AccountOrder(Resource):
     """
@@ -80,9 +94,10 @@ class AccountOrder(Resource):
 
     def get(self, account_id, order_id):
         """
-        End-point to get the existing distributors details
+        End-point to get the existing order details
         """
         try:
+            # GET request for account id and order id
             account_handler.get(account_id)
             output = order_handler.get_order(account_id, order_id)
             if len(output) > 0:
@@ -95,6 +110,7 @@ class AccountOrder(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=404)
 
 
+# Generate bill for an order of an account
 @ns.route("/<string:account_id>/orders/<string:order_id>/bills")
 class AccountOrderBills(Resource):
     """
@@ -106,6 +122,7 @@ class AccountOrderBills(Resource):
         End-point to add bill to the distributor's account for the orders placed by the distributor
         """
         try:
+            # Create bill for order of an account if it doesn't exist
             account_handler.get(account_id)
             order = order_handler.get_order(account_id, order_id)
             try:
@@ -120,6 +137,7 @@ class AccountOrderBills(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=404)
 
 
+# Generate bills for an account
 @ns.route("/<string:account_id>/bills")
 class AccountBills(Resource):
     """
@@ -131,9 +149,11 @@ class AccountBills(Resource):
         End-point to add bill to the distributor's account for the orders placed by the distributor
         """
         try:
+            # Get orders for an account
             account_handler.get(account_id)
             orders = order_handler.get_orders(account_id)
             bill_ids = []
+            # Generate bill for each order
             for order in orders:
                 try:
                     account_bill_handler.get(account_id, order['order_id'])
@@ -146,6 +166,7 @@ class AccountBills(Resource):
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=404)
 
 
+# Create payments towards an account
 @ns.route("/<string:account_id>/payments")
 class AccountPayments(Resource):
     """
@@ -158,6 +179,7 @@ class AccountPayments(Resource):
         End-point to add payment details and change outstanding balance of distributor’s account on receiving payment
         """
         try:
+            # Create payment for an account
             account_handler.get(account_id)
             payment = json.loads(request.data)
             payment_id = account_bill_handler.pay_bills(account_id, payment['amount'])
