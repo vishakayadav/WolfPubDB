@@ -235,7 +235,7 @@ ACCOUNT_PAYMENTS = {
 REPORTS = {
     'table_name': 'reports',
     'columns': {
-        'report_id': {'type': 'int(6) unsigned', 'constraint': 'not null'},
+        'report_id': {'type': 'int(6) unsigned', 'constraint': 'auto_increment'},
         'month': {'type': 'int(2)', 'constraint': 'not null'},
         'year': {'type': 'int(4)', 'constraint': 'not null'},
         'total_expense': {'type': 'decimal(8, 2)', 'constraint': 'not null'},

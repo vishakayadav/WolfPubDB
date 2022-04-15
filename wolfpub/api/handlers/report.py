@@ -4,7 +4,7 @@ Module for handling distributors
 
 from wolfpub.api.utils.query_generator import QueryGenerator
 from wolfpub.constants import DISTRIBUTORS, ACCOUNT_PAYMENTS, SALARY_PAYMENTS, ORDERS, ACCOUNTS, AUTHORS, \
-    BOOK_ORDERS_INFO, PERIODICAL_ORDERS_INFO
+    BOOK_ORDERS_INFO, PERIODICAL_ORDERS_INFO, REPORTS
 
 
 class ReportHandler(object):
@@ -15,6 +15,7 @@ class ReportHandler(object):
     def __init__(self, db):
         self.db = db
         self.query_gen = QueryGenerator()
+        self.table_name = REPORTS['table_name']
         self.revenue_table = f"{ACCOUNT_PAYMENTS['table_name']} natural join " \
                              f"{ACCOUNTS['table_name']} natural join " \
                              f"{DISTRIBUTORS['table_name']}"
@@ -25,6 +26,19 @@ class ReportHandler(object):
         cond = {'>=': start_date} if start_date else {}
         cond.update({'<': end_date} if end_date else {})
         return {date_col: cond} if cond else cond
+
+    # insert or update report in the reports table
+    def set_monthly_report(self, report, month, year):
+        data = {'month': month,
+                'year': year}
+        select_report = self.db.get_result(self.query_gen.select(self.table_name, ['report_id'], data))
+        data.update({'total_revenue': report['total_revenue'],
+                     'total_expense': report['total_expense']['salary_expense'] +
+                                      report['total_expense']['shipping_cost']})
+        if select_report:
+            self.db.execute([self.query_gen.update(self.table_name, condition={}, update_data=data)])
+        else:
+            self.db.execute([self.query_gen.insert(self.table_name, [data])])
 
     # Get Number of publications and total price of publication for each publication for each distributor
     def get_number_price_per_publication_per_distributor(self, start_date: str, end_date: str):

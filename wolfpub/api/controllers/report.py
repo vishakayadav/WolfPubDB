@@ -55,6 +55,7 @@ class MonthlyReport(Resource):
             output['total_revenue'] = report_handler.get_revenue(start_date, end_date)
             output['total_expense'] = report_handler.get_salary_expense(start_date, end_date)
             output['total_expense'].update(report_handler.get_shipping_cost_expense(start_date, end_date))
+            report_handler.set_monthly_report(output, month, year)
             return CustomResponse(data=output)
         except (QueryGenerationException, MariaDBException, ValueError) as e:
             return CustomResponse(error=e.__class__.__name__, message=e.__str__(), status_code=400)
