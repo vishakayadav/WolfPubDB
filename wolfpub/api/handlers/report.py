@@ -29,16 +29,15 @@ class ReportHandler(object):
 
     # insert or update report in the reports table
     def set_monthly_report(self, report, month, year):
-        data = {'month': month,
+        cond = {'month': month,
                 'year': year}
-        select_report = self.db.get_result(self.query_gen.select(self.table_name, ['report_id'], data))
-        data.update({'total_revenue': report['total_revenue'],
-                     'total_expense': report['total_expense']['salary_expense'] +
-                                      report['total_expense']['shipping_cost']})
+        select_report = self.db.get_result(self.query_gen.select(self.table_name, ['report_id'], cond))
+        data = {'total_revenue': report['total_revenue'],
+                'total_expense': report['total_expense']['salary_expense'] + report['total_expense']['shipping_cost']}
         if select_report:
-            self.db.execute([self.query_gen.update(self.table_name, condition={}, update_data=data)])
+            self.db.execute([self.query_gen.update(self.table_name, condition=cond, update_data=data)])
         else:
-            self.db.execute([self.query_gen.insert(self.table_name, [data])])
+            self.db.execute([self.query_gen.insert(self.table_name, [{**cond, **data}])])
 
     # Get Number of publications and total price of publication for each publication for each distributor
     def get_number_price_per_publication_per_distributor(self, start_date: str, end_date: str):
