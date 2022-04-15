@@ -118,7 +118,6 @@ class QueryGenerator(object):
         Creates update query for given table, condition and key-value pair for column to be updated with given value
         """
         self.is_list(update_data)
-        where_cond = self.get_where_cond(condition)
         set_values = []
         for key, value in update_data.items():
             if isinstance(value, dict) and any(k in self.set_operators for k in value):
@@ -129,7 +128,10 @@ class QueryGenerator(object):
                 error_msg = 'Update Query Generator does not support list or dictionary values'
                 logger.error(error_msg)
                 raise QueryGenerationException(error_msg)
-        query = f"""update {table_name} set {', '.join(set_values)} where {where_cond}"""
+        query = f"""update {table_name} set {', '.join(set_values)}"""
+        if condition:
+            where_cond = self.get_where_cond(condition)
+            query += f" where {where_cond}"
         return query
 
     def delete(self, table_name: str, condition: dict):
