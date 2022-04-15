@@ -27,7 +27,7 @@ SUGGEST_FILTER_ARGUMENTS = api.model("Suggest_Filter_Model", {
 })
 
 DISTRIBUTOR_ARGUMENTS = api.model("Distributor_Model", {
-    "distributor_id": fields.String(min_length=1, max_length=6, required=False),
+    "distributor_id": fields.String(min_length=1, max_length=6, required=True),
     "name": fields.String(min_length=1, max_length=200, required=True),
     "distributor_type": fields.String(min_length=1, max_length=20, required=True),
     "address": fields.String(min_length=1, max_length=100, required=True),

@@ -15,6 +15,9 @@ class MariaDBConnector(object):
         self.conn = None
 
     def connect(self):
+        """
+        Returns connection to mariadb
+        """
         try:
             return mariadb.connect(
                 user=self.user,
@@ -27,6 +30,9 @@ class MariaDBConnector(object):
             raise MariaDBException(f'Error connecting to MariaDB Platform: {e}')
 
     def get_cursor(self):
+        """
+        Get a connection and return the cursor for the active connection
+        """
         try:
             self.conn = self.connect()
             return self.conn.cursor()
@@ -35,6 +41,9 @@ class MariaDBConnector(object):
             raise MariaDBException(f'Error in getting cursor for MariaDB: {e}')
 
     def execute(self, queries: list):
+        """
+        Executes the list of queries within one transaction
+        """
         cur = self.get_cursor()
         self.conn.autocommit = False
         last_row_ids = []
@@ -50,7 +59,13 @@ class MariaDBConnector(object):
         finally:
             self.conn.close()
 
-    def _execute(self, query: str, cursor):
+    @staticmethod
+    def _execute(query: str, cursor):
+        """
+        Could be used by other classes only if response from one query to be used in another and
+        everything is supposed to be in one transaction.
+        This function does not commit after execution, so the function calling it should take care of the commit process
+        """
         logger.info(f'Executing: {query}')
         try:
             cursor.execute(query)
@@ -60,6 +75,9 @@ class MariaDBConnector(object):
             raise MariaDBException(e)
 
     def get_result(self, query: str):
+        """
+        Get response for select queries as a list
+        """
         cur = self.get_cursor()
         self._execute(query, cur)
         rows = cur.fetchall()

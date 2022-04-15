@@ -39,7 +39,11 @@ class ReportHandler(object):
         return self.db.get_result(select_query)
 
     # Fetch count of active distributors
-    def get_active_distributor_count(self, cond=None):
+    def get_active_distributor_count(self, cond: dict = None):
+        if cond:
+            cond.update({'is_active': 1})
+        else:
+            cond = {'is_active': 1}
         select_query = self.query_gen.select(ACCOUNTS['table_name'], ['count(account_id) as total_distributors'], cond)
         count = self.db.get_result(select_query)
         if not count:
