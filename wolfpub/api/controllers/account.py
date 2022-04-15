@@ -83,7 +83,7 @@ class AccountOrders(Resource):
             books = book_handler.get_ids({'items': items['books']}) if items['books'] else []  # pub_id, isbn, price
             periodicals = periodical_handler.get_ids({'items': items['periodicals']}) if items['periodicals'] else []
             books = [{**u, **v} for u in books for v in pub_items['books']
-                     if u['title'] == v['title'] and u['edition'] == v['edition']]  # add quantity
+                     if u['title'] == v['title'] and int(u['edition']) == int(v['edition'])]  # add quantity
             periodicals = [{**u, **v} for u in periodicals for v in pub_items['periodicals']
                            if u['title'] == v['title'] and u['issue'] == v['issue']]
 
